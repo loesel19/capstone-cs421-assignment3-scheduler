@@ -1,9 +1,11 @@
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 
 public class TestClass {
     private static DatabaseAccessObject DAO = new DatabaseAccessObject();
+    private static final String testFilePath = "testFile1.txt";
     public static void main(String args[]) throws SQLException, ClassNotFoundException, IOException {
 
         runDBTests();
@@ -148,7 +150,7 @@ public class TestClass {
          *           read a single line of it.
          */
         System.out.println("STARTING FILE TEST 1 ...");
-        FileInteractionObject fileInteractionObject = new FileInteractionObject("testFile1.txt");
+        FileInteractionObject fileInteractionObject = new FileInteractionObject(testFilePath);
         if(!fileInteractionObject.instanciateBufferedReader()){
             return false;
         }
@@ -162,6 +164,25 @@ public class TestClass {
             return false;
         }
     }
+    public static boolean FileTest2() throws IOException {
+        /**
+         * Name : FileTest2
+         * Returns : boolean - true -> test passed, false -> test failed
+         * Purpose : The purpose of this method is to try and read all lines of our file into a list.
+         */
+        System.out.println("STARTING FILE TEST 2 ...");
+        FileInteractionObject fileInteractionObject = new FileInteractionObject(testFilePath);
+        if(!fileInteractionObject.instanciateBufferedReader()){
+            return false;
+        }
+        ArrayList<objFileData> lstFileData = fileInteractionObject.readAllFileLine();
+        for(objFileData d : lstFileData){
+            System.out.println(d.getStrCourseName() + " : " + d.getStrProfessorName() + " : " + d.getStrDays() + " : " +
+                    d.getStrStartTime() + " : " + d.getStrEndTime());
+        }
+        return true;
+
+    }
     public static void runFileTests() throws IOException {
         /**
          * Name : runFileTests
@@ -171,6 +192,7 @@ public class TestClass {
          */
         System.out.println("BEGIN FILE INTERACTION TESTS .....");
         System.out.println("FileTest1 : " + FileTest1());
+        System.out.println("FileTest2 : " + FileTest2());
         System.out.println("END FILE INTERACTION TESTS .....");
     }
 }

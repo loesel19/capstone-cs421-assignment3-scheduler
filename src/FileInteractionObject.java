@@ -3,6 +3,7 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.nio.Buffer;
+import java.util.ArrayList;
 
 public class FileInteractionObject {
     /**
@@ -61,5 +62,30 @@ public class FileInteractionObject {
         }
 
         return fileData;
+    }
+    public ArrayList<objFileData> readAllFileLine() throws IOException {
+        /**
+         * Name : readAllFileLine
+         * Params : none.
+         * Returns : lstAllFileLine - an arraylist containing objFileData object data models of each line of code.
+         * Purpose : The purpose of this method is to return the data objects models of each line of the file in a single
+         *           arrayList.
+         * Notes :
+         */
+        ArrayList<objFileData> lstFileData = new ArrayList<>();
+        String line; //a line of data from our file
+        //we want to read a line and check that it is not null. if line is null we are at the end of the file and will move on.
+        while((line = bufferedReader.readLine()) != null){
+            String[] strValues = line.split("\t");
+            try{
+                //add a new objFileData to the list with this data.
+                lstFileData.add(new objFileData(strValues[0], strValues[1], strValues[2], strValues[3], strValues[4]));
+            } catch (Exception ex){
+                //if a non null line fails to read return null
+                return null;
+            }
+        }
+
+        return lstFileData;
     }
 }
