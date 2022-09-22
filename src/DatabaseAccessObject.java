@@ -375,7 +375,7 @@ public class DatabaseAccessObject {
         connection.close();
         return blnAdded;
     }
-    public ArrayList<objSchedule> readAllScheduled(){
+    public ArrayList<objSchedule> readAllScheduled() throws SQLException, ClassNotFoundException {
         /**
          * Name : readAllScheduled
          * Parmas : None.
@@ -386,6 +386,27 @@ public class DatabaseAccessObject {
          */
         ArrayList<objSchedule> lstScheduled = new ArrayList<objSchedule>();
 
+        //get connection and sql statement objects
+        Connection connection = getConnection();
+        Statement statement = connection.createStatement();
+        String strSQL = "SELECT * FROM SCHEDULE_TABLE";
+        try{
+            //execute statement and read first
+            ResultSet resultSet = statement.executeQuery(strSQL);
+            //read all the data returned in the result set
+
+            while(resultSet.next()){
+                objSchedule temp = new objSchedule(resultSet.getInt("TUID"), resultSet.getInt("COURSE_TUID"),
+                        resultSet.getString("COURSE_SECTION"), resultSet.getInt("CLASSROOM_TUID"),
+                        resultSet.getInt("PROFESSOR_TUID"), resultSet.getString("START_TIME"), resultSet.getString("END_TIME"),
+                        resultSet.getString("DAYS"));
+                lstScheduled.add(temp);
+            }
+        } catch (Exception ex){
+            //when we get an exception we should return null so that a half assed data doesn't get returned.
+            ex.printStackTrace();
+            return null;
+        }
         return lstScheduled;
     }
     public objCourse getCourse(String strCourseID) throws SQLException, ClassNotFoundException {
@@ -419,7 +440,7 @@ public class DatabaseAccessObject {
 
         return course;
     }
-    public objClassroom getClassroom(String strClassroomName){
+    public objClassroom getClassroom(String strClassroomName) throws SQLException, ClassNotFoundException {
         /**
          * Name : getClassroom
          * Params : strClassroomName
@@ -433,9 +454,25 @@ public class DatabaseAccessObject {
 
         objClassroom classroom = null; //the classroom we are trying to model
 
+        Connection connection = getConnection();
+        Statement statement = connection.createStatement();
+        //and a string to try and find a course with this id
+        String strSQL = "SELECT * FROM CLASSROOM_TABLE WHERE CLASSROOM_NAME = '" + strClassroomName + "';";
+        //now try and execute that statement
+        try{
+            ResultSet resultSet = statement.executeQuery(strSQL);
+            classroom =  new objClassroom(resultSet.getInt("TUID"), resultSet.getString("CLASSROOM_NAME"),
+                    resultSet.getInt("CAPACITY"));
+            resultSet.close();
+        }catch (Exception ex){
+            ex.printStackTrace();
+        }
+        statement.close();
+        connection.close();
+
         return classroom;
     }
-    public objProfessor getProfessor(String strProfessorName){
+    public objProfessor getProfessor(String strProfessorName) throws SQLException, ClassNotFoundException {
         /**
          * Name : getProfessor
          * Params : strProfessorName - the name of the professor we want data about
@@ -446,6 +483,20 @@ public class DatabaseAccessObject {
          */
         objProfessor professor = null; //the professor we are trying to model
 
+        Connection connection = getConnection();
+        Statement statement = connection.createStatement();
+        //and a string to try and find a course with this id
+        String strSQL = "SELECT * FROM PROFESSOR_TABLE WHERE PROFESSOR_NAME = '" + strProfessorName + "';";
+        //now try and execute that statement
+        try{
+            ResultSet resultSet = statement.executeQuery(strSQL);
+            professor =  new objProfessor(resultSet.getInt("TUID"), resultSet.getString("PROFESSOR_NAME"));
+            resultSet.close();
+        }catch (Exception ex){
+            ex.printStackTrace();
+        }
+        statement.close();
+        connection.close();
         return professor;
     }
 }

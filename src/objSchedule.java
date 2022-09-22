@@ -41,4 +41,38 @@ public class objSchedule{
         this.strEndTime = strEndTime;
         this.strDays = strDays;
     }
+
+/* Intellij generated getters */
+
+    public int getIntTUID() {
+        return intTUID;
+    }
+
+    public int getIntCourseTUID() {
+        return intCourseTUID;
+    }
+
+    public String getStrCourseSection() {
+        return strCourseSection;
+    }
+
+    public int getIntClassroomTUID() {
+        return intClassroomTUID;
+    }
+
+    public int getIntProfessorTUID() {
+        return intProfessorTUID;
+    }
+
+    public String getStrStartTime() {
+        return strStartTime;
+    }
+
+    public String getStrEndTime() {
+        return strEndTime;
+    }
+
+    public String getStrDays() {
+        return strDays;
+    }
 }

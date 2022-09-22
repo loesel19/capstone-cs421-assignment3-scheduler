@@ -22,4 +22,13 @@ public class objProfessor{
         this.intProfessorTUID = intProfessorTUID;
         this.strProfessorName = strProfessorName;
     }
+
+    /* IntelliJ generated Getters */
+    public int getIntProfessorTUID() {
+        return intProfessorTUID;
+    }
+
+    public String getStrProfessorName() {
+        return strProfessorName;
+    }
 }

@@ -26,4 +26,17 @@ public class objClassroom{
         this.strClassroomName = strClassroomName;
         this.intCapacity = intCapacity;
     }
+
+    /* Intellij generated getters */
+    public int getIntClassroomTUID() {
+        return intClassroomTUID;
+    }
+
+    public String getStrClassroomName() {
+        return strClassroomName;
+    }
+
+    public int getIntCapacity() {
+        return intCapacity;
+    }
 }
