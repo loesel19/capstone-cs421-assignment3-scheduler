@@ -1,17 +1,15 @@
+import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 
 public class TestClass {
     private static DatabaseAccessObject DAO = new DatabaseAccessObject();
-    public static void main(String args[]) throws SQLException, ClassNotFoundException {
-        System.out.println("BEGIN DATABASE TESTS .....");
-        System.out.println("Test1 : " + Test1());
-        System.out.println("Test2 : " + Test2());
-        System.out.println("Test3 : " + Test3());
-        System.out.println("Test4 : " + Test4());
-        System.out.println("END DATABASE TESTS .....");
+    public static void main(String args[]) throws SQLException, ClassNotFoundException, IOException {
+
+        runDBTests();
+        runFileTests();
     }
-    public static boolean Test1() throws SQLException, ClassNotFoundException {
+    public static boolean DBTest1() throws SQLException, ClassNotFoundException {
         /**
          * Name : Test1
          * Returns : boolean - true -> test passed, false -> test failed
@@ -19,7 +17,7 @@ public class TestClass {
          * Notes :
          */
         //this test is to see if our DatabaseAccessObject.checkDBExists returns false when there is no database
-        System.out.println("Running Test1 ...");
+        System.out.println("Running DBTest1 ...");
         try{
             DAO.startUp();
         } catch (Exception ex){
@@ -29,7 +27,7 @@ public class TestClass {
         return true;
 
     }
-    public static boolean Test2() throws SQLException, ClassNotFoundException {
+    public static boolean DBTest2() throws SQLException, ClassNotFoundException {
         /**
          * Name : Test2
          * Returns : boolean - true -> test passed, false -> test failed
@@ -37,7 +35,7 @@ public class TestClass {
          *           when the create method is given valid data.
          * Notes :
          */
-        System.out.println("Running Test2 ...");
+        System.out.println("Running DBTest2 ...");
         if(!DAO.addCourse("CSC 105", "PROGRAMMING", 4)){
             return false;
         }
@@ -52,14 +50,14 @@ public class TestClass {
         }
         return true;
     }
-    public static boolean Test3() throws SQLException, ClassNotFoundException {
+    public static boolean DBTest3() throws SQLException, ClassNotFoundException {
         /**
          * Name : Test3
          * Returns : boolean - true -> test passed, false -> test failed
          * Purpose : the purpose of this method is to see if we can search for objects in our database given good input
          * Notes : This test does not include anything from the schedule table
          */
-        System.out.println("Running Test3 ...");
+        System.out.println("Running DBTest3 ...");
         objCourse course = DAO.getCourse("CSC 105");
         if(course == null){
             System.out.println("Failed to get Course ");
@@ -86,14 +84,14 @@ public class TestClass {
 
         return true;
     }
-    public static boolean Test4() throws SQLException, ClassNotFoundException {
+    public static boolean DBTest4() throws SQLException, ClassNotFoundException {
         /**
          * Name : Test4
          * Returns : boolean - true -> test passed, false -> test failed
          * Purpose : the purpose of this method is to test that our method for getting a list with all scheduled courses
          *           works properly.
          */
-        System.out.println("Running Test4 ...");
+        System.out.println("Running DBTest4 ...");
         //first schedule a few more courses
         DAO.addSchedule(1, "02", 1, 1, "10:30", "12:30", "MW");
         DAO.addSchedule(1, "03", 1, 1, "12:30", "02:30", "MW");
@@ -111,5 +109,68 @@ public class TestClass {
         }
 
         return true;
+    }
+    public static boolean DBTest5() throws SQLException, ClassNotFoundException {
+        /**
+         * Name : Test5
+         * Returns : boolean - true -> test passed, false -> test failed
+         * Purpose : The purpose of this test is to see that our end procedure of asking the user if they want to delete
+         *           the database or not executes properly when the Program finishes running.
+         */
+        System.out.println("Running DBTest5 ...");
+        try {
+            DAO.endSession();
+            return true;
+        }catch (Exception ex){
+            ex.printStackTrace();
+            return false;
+        }
+    }
+    public static void runDBTests() throws SQLException, ClassNotFoundException {
+        /**
+         * Name : runDBTests
+         * Returns : none.
+         * Purpose : This function is meant to run the database tests that have been constructed and output their results
+         */
+        System.out.println("BEGIN DATABASE TESTS .....");
+        System.out.println("DBTest1 : " + DBTest1());
+        System.out.println("DBTest2 : " + DBTest2());
+        System.out.println("DBTest3 : " + DBTest3());
+        System.out.println("DBTest4 : " + DBTest4());
+        System.out.println("DBTest5 : " + DBTest5());
+        System.out.println("END DATABASE TESTS .....");
+    }
+    public static boolean FileTest1() throws IOException {
+        /**
+         * Name : FileTest1
+         * Returns : boolean - true -> test passed, false -> test failed
+         * Purpose : The purpose of this Test is to see if we can make an instance of our fileInteractionObject, and
+         *           read a single line of it.
+         */
+        System.out.println("STARTING FILE TEST 1 ...");
+        FileInteractionObject fileInteractionObject = new FileInteractionObject("testFile1.txt");
+        if(!fileInteractionObject.instanciateBufferedReader()){
+            return false;
+        }
+        try {
+            objFileData objFileData = fileInteractionObject.readFileLine();
+            System.out.println(objFileData.getStrCourseName() + " : " + objFileData.getStrProfessorName() + " : " +
+                    objFileData.getStrDays() + " : " + objFileData.getStrStartTime() + " : " + objFileData.getStrEndTime());
+            return true;
+        } catch (Exception ex){
+            ex.printStackTrace();
+            return false;
+        }
+    }
+    public static void runFileTests() throws IOException {
+        /**
+         * Name : runFileTests
+         * Params : none.
+         * Returns : none.
+         * Purpose : This function is meant to run the File tests that have been constructed and output their results
+         */
+        System.out.println("BEGIN FILE INTERACTION TESTS .....");
+        System.out.println("FileTest1 : " + FileTest1());
+        System.out.println("END FILE INTERACTION TESTS .....");
     }
 }

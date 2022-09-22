@@ -1,0 +1,2 @@
+CSC 105	James	MW	8:30	10:30
+CSC 105	Smith	MW	8:30	10:30

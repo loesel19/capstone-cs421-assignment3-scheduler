@@ -200,6 +200,41 @@ public class DatabaseAccessObject {
 
         }
     }
+    private void wipeScheduleTable() throws SQLException, ClassNotFoundException {
+        /**
+         * Name : wipeScheduleTable
+         * Params : none.
+         * Return : none.
+         * Purpose : the purpose of this function is to delete all data from the schedule table
+         * Notes :
+         */
+        //get connection object and create a statement
+        Connection connection = getConnection();
+        Statement statement = connection.createStatement();
+        String strSQL = "DELETE FROM SCHEDULE_TABLE";
+        try{
+            statement.execute(strSQL);
+            strSQL = "DELETE FROM SQLITE_SEQUENCE WHERE name='SCHEDULE_TABLE'";
+            statement.execute(strSQL);
+        }catch (Exception ex){
+            ex.printStackTrace();
+        }
+        statement.close();
+        connection.close();
+
+    }
+    public void resetDB() throws SQLException, ClassNotFoundException {
+        /**
+         * Name : resetDB
+         * Params : none.
+         * Returns : none.
+         * Purpose : The purpose of this method is to reset the database to its default state. We first
+         *           call our method to wipe the schedule table. We then make sure that our static tables (PROFESSOR, COURSES, CLASSROOM)
+         *           have the default data in them.
+         * Notes :
+         */
+        wipeScheduleTable();
+    }
     private void createDB(){
         /**
          * Name : createDB
@@ -232,24 +267,46 @@ public class DatabaseAccessObject {
         if(checkDBExists()){
             String strInput = ""; //string for user input. string instead of a char so we do not throw an exception if user inputs more than 1 character
             /* database exists already ask user if they would like to destroy it */
-            System.out.println("Database exists already, would you like to destroy it?");
+            System.out.println("Database exists already, would you like to reset it?");
 
             while (!strInput.equals("0") && !strInput.equals("1")) {
-                System.out.println("Enter 0 to destroy, 1 to keep");
+                System.out.println("Enter 0 to reset, 1 to keep");
                 strInput = sc.next();
             }
             if(strInput.equals("1")){
                 /* keep  database, so do nothing here and return */
                 return;
             }
-            //destroy db
-            destroyDB();
+            //reset the db and return from the function
+            resetDB();
+            return;
         }
         /* if we make it our here we have no DB because it either never existed or it was destroyed.
             so let's create our database
          */
         createDB();
         return;
+    }
+    public void endSession() throws SQLException, ClassNotFoundException {
+        /**
+         * Name : endSession
+         * Params : none.
+         * Returns : none.
+         * Purpose : The purpose of this function is to check if the user would like to destroy or keep the database
+         *           when the program execution comes to an end.
+         * Notes :
+         */
+        Scanner sc = new Scanner(System.in);
+        String strInput = "";
+
+        while (!strInput.equals("0") && !strInput.equals("1")) {
+            System.out.println("Enter 0 to destroy database, 1 to keep.");
+            strInput = sc.next();
+        }
+        if(strInput.equals("1")){
+            return;
+        }
+        destroyDB();
     }
     public boolean addCourse(String strCourseID, String strCourseTitle, int intCourseHours) throws SQLException, ClassNotFoundException {
         /**
