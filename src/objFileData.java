@@ -22,6 +22,16 @@ public class objFileData {
         this.strStartTime = strStartTime;
         this.strEndTime = strEndTime;
     }
+    public String toString(){
+        /**
+         * Name : toString
+         * Params : none
+         * Returns : A string with all the fields of this object seperated by spaces.
+         * Purpose : this is an override of the objects ToString method meant to return meaningful data about this object.
+         */
+        return this.strCourseName + " " + this.strProfessorName + " " + this.strDays + " " + this.strStartTime +  " " +
+                this.strEndTime;
+    }
     /* IntelliJ generated getters */
 
     public String getStrCourseName() {
@@ -42,5 +52,8 @@ public class objFileData {
 
     public String getStrEndTime() {
         return strEndTime;
+    }
+    public void setStrStartTime(String strStartTime){
+        this.strStartTime = strStartTime;
     }
 }
