@@ -34,10 +34,39 @@ public class SchedulerObject {
         this.databaseAccessObject = databaseAccessObject;
         this.fileInteractionObject = fileInteractionObject;
     }
-    private boolean canSchedule(objFileData fileData){
 
+    private String changeDays(String strDays){
+        /**
+         * Name : changeDays
+         * Params : strDays - the current days we are trying to schedule on
+         * Returns : strNewDays - the new days we will try to schedule on.
+         * Purpose : The purpose of this function is to go through every possible day(s) and switch it to the next day(s)
+         */
+        String strNewDays = "";
+        switch(strDays){
+            case "M":
+                strNewDays = "T";
+                break;
+            case "T":
+                strNewDays = "W";
+                break;
+            case "W":
+                strNewDays = "R";
+                break;
+            case "R":
+            case "TR":
+                strNewDays = "F";
+                break;
+            case "MR" :
+                strNewDays = "TR";
+                break;
+            default:
+                strNewDays = "-1";
+                break;
+        }
+        return strNewDays;
     }
-    public void scheduleFourCredit(objSchedule schedule) {
+    private boolean scheduleFourCredit(objFileData fileData) {
         /**
          * Name : scheduleOne
          * Params : schedule - an objSchedule data model containing the data on the course we want to try to schedule.
@@ -46,23 +75,47 @@ public class SchedulerObject {
          */
     }
 
-    public void scheduleThreeCredit(objSchedule schedule) {
+    private boolean scheduleThreeCredit(objFileData fileData) {
 
     }
 
-    public void scheduleTwoCredit(objSchedule schedule) {
+    private boolean scheduleTwoCredit(objFileData fileData) {
 
     }
 
-    public void scheduleOneCredit(objFileData fileData) {
+    private boolean scheduleOneCredit(objFileData fileData) {
+
+    }
+    public void Schedule(objFileData fileData) throws SQLException, ClassNotFoundException {
+
+        boolean blnScheduled = false;
+        objCourse course = databaseAccessObject.getCourse(fileData.getStrCourseName());
+
+
+            switch (course.getIntCreditHours()){
+                case 1:
+                    blnScheduled = scheduleOneCredit(fileData);
+                    break;
+                case 2:
+                    blnScheduled = scheduleTwoCredit(fileData);
+                    break;
+                case 3:
+                    blnScheduled = scheduleThreeCredit(fileData);
+                    break;
+                case 4:
+                    blnScheduled = scheduleFourCredit(fileData);
+                    break;
+                default:
+                    System.out.println("Hit default in schedule method.");
+                    return;
+            }
 
     }
 
     public void scheduleAll(ArrayList<objFileData> lstFileData) throws SQLException, ClassNotFoundException {
         for(objFileData d : lstFileData){
-            //first get the course
-            objCourse course = databaseAccessObject.getCourse(d.getStrCourseName());
-
+            //try to schedule the course.
+            Schedule(d);
         }
     }
 

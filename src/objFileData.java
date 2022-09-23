@@ -56,4 +56,7 @@ public class objFileData {
     public void setStrStartTime(String strStartTime){
         this.strStartTime = strStartTime;
     }
+    public void setStrDays(String strDays){
+        this.strDays = strDays;
+    }
 }
