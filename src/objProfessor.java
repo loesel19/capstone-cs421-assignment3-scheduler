@@ -22,6 +22,15 @@ public class objProfessor{
         this.intProfessorTUID = intProfessorTUID;
         this.strProfessorName = strProfessorName;
     }
+    public objProfessor(String strProfessorName){
+        /**
+         * Name : objProfessor
+         * Params : strProfessorName - The name of this professor, ex. JOHN ARCHIBALD
+         * Purpose : this is a parameterized constructor for objProfessor which will be used when we read in professors
+         *           from a file.
+         */
+        this.strProfessorName = strProfessorName;
+    }
 
     /* IntelliJ generated Getters */
     public int getIntProfessorTUID() {

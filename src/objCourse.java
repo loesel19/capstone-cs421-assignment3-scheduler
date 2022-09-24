@@ -22,10 +22,23 @@ public class objCourse{
          *          strCourseID - The course ID for this course, ex. CSC 105
          *          strCourseTitle - The title for this course, ex. Computers and Programming.
          *          intCreditHours - The credit hours that this course is worth, ex. 4
-         * Purpose : This is the paramaterized constructor for objCourse, it will be used to have a data model that
+         * Purpose : This is parameterized constructor for objCourse, it will be used to have a data model that
          *           represents a course entry in the courses table.
          */
         this.intCourseTUID = intCourseTUID;
+        this.strCourseID = strCourseID;
+        this.strCourseTitle = strCourseTitle;
+        this.intCreditHours = intCreditHours;
+    }
+    public objCourse(String strCourseID, String strCourseTitle, int intCreditHours){
+        /**
+         * Name : objCourse
+         * Params : strCourseID - The course ID for this course, ex. CSC 105
+         *          strCourseTitle - The title for this course, ex. Computers and Programming.
+         *          intCreditHours - The credit hours that this course is worth, ex. 4
+         * Purpose : This is a parameterized constructor for objCourse, it will be used when adding an
+         *           entry into the COURSE_TABLE when reading from our catalog file.
+         */
         this.strCourseID = strCourseID;
         this.strCourseTitle = strCourseTitle;
         this.intCreditHours = intCreditHours;

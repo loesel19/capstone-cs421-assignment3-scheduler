@@ -68,23 +68,70 @@ public class SchedulerObject {
     }
     private boolean scheduleFourCredit(objFileData fileData) {
         /**
-         * Name : scheduleOne
-         * Params : schedule - an objSchedule data model containing the data on the course we want to try to schedule.
-         * Returns : none
-         * Purpose : This method tries to
+         * Name : scheduleFourCredit
+         * Params : fileData - the object containing the data about the class we want to try and schedule.
+         * Returns : blnScheduled - true -> we scheduled the class, false -> class not scheduled
+         * Purpose : This method tries to schedule a four credit hour class. We will Check our scheduled table to see
+         *           if the appropriate time slot is clear based on our scheduling criteria. If no spot available we
+         *           will change the time or day depending on scheduling criteria and try again.
+         * Notes :
          */
+        boolean blnScheduled = false;
+
+        return blnScheduled;
+
     }
 
     private boolean scheduleThreeCredit(objFileData fileData) {
 
+        boolean blnScheduled = false;
+
+        return blnScheduled;
     }
 
     private boolean scheduleTwoCredit(objFileData fileData) {
 
+        boolean blnScheduled = false;
+
+        return blnScheduled;
     }
 
-    private boolean scheduleOneCredit(objFileData fileData) {
+    private boolean scheduleOneCredit(objFileData fileData) throws SQLException, ClassNotFoundException {
+        /**
+         * Name : scheduleOneCredit
+         * Params : fileData - a data model object that represents the class that we want to schedule
+         * Returns : blnScheduled - true -> we were able to schedule the class, false -> class not scheduled.
+         * Purpose : The purpose of this method is to try and schedule a one credit hour course based on our
+         *           scheduling criteria. If the first slot is not open we change the time and days according to the
+         *           scheduling criteria. Then we return a boolean that represents if we could schedule the course at all
+         *           or not.
+         * Notes :
+         */
+        //the first thing we want to do is see if we can schedule this course during the originally designated time slot
+        DatabaseAccessObject databaseAccessObject = new DatabaseAccessObject();
+        objSchedule schedule = databaseAccessObject.getOneScheduledCourse(fileData.getStrStartTime(), fileData.getStrEndTime(),
+                fileData.getStrDays());
+        ArrayList<objClassroom> lstClassrooms = databaseAccessObject.getAllClassrooms();
+        if(schedule == null){
+                if (databaseAccessObject.addSchedule(fileData)) {
+                     return true;
+                }
+        }else{
+            while(!fileData.getStrDays().equals("-1")){
+                while(!fileData.getStrStartTime().equals("-1")){
+                    fileData = getNextTime(fileData);
+                    schedule = databaseAccessObject.getOneScheduledCourse(fileData.getStrStartTime(), fileData.getStrEndTime(),
+                            fileData.getStrDays());
+                    if(schedule == null) {
+                        databaseAccessObject.addSchedule(fileData);
+                        return true;
+                    }
+                }
+                fileData.setStrDays(changeDays(fileData.getStrDays()));
+            }
+        }
 
+        return false;
     }
     public void Schedule(objFileData fileData) throws SQLException, ClassNotFoundException {
 
@@ -106,7 +153,7 @@ public class SchedulerObject {
                     blnScheduled = scheduleFourCredit(fileData);
                     break;
                 default:
-                    System.out.println("Hit default in schedule method.");
+                    System.out.println("Hit default in schedule method. Somehow");
                     return;
             }
 
@@ -130,16 +177,23 @@ public class SchedulerObject {
         switch (course.getIntCreditHours()) {
             case 1:
                 //get just the hour of our time by parsing the integer in our startTime string before the :
-                int intNewTime = Integer.parseInt(fileData.getStrStartTime().split(":")[0]);
-                intNewTime++; //add an hour
-                String strNewTime = intNewTime + ":00";
+                int intNewStartTime = Integer.parseInt(fileData.getStrStartTime().split(":")[0]);
+                intNewStartTime++; //add an hour
+                String strNewStartTime = intNewStartTime + ":00";
+                //now get new end time
+                int intNewEndTime = Integer.parseInt(fileData.getStrEndTime().split(":")[0]);
+                intNewEndTime++;
+                String strNewEndTime = intNewEndTime + ":00";
                 /* use the regex pattern we have to see if a 1 credit hour class can be scheduled */
-                Matcher matcher = pattern.matcher(strNewTime);
+                Matcher matcher = pattern.matcher(strNewStartTime);
                 if(!matcher.find()){
                     //can not schedule on this day, try the next day.
-
+                    fileData.setStrEndTime("-1");
+                    fileData.setStrStartTime("-1");
+                    break;
                 }
-                fileData.setStrStartTime(strNewTime);
+                fileData.setStrStartTime(strNewStartTime);
+                fileData.setStrEndTime(strNewEndTime);
                 break;
             case 2:
 

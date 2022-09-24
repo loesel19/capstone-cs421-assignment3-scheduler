@@ -1,0 +1,16 @@
+CSC 105	Computers and Programming	4
+CSC 107	Introduction to Code Preparation	1
+CSC 116	Programming I	4
+CSC 216	Programming II	4
+CSC 227	Commenting and Naming Convention	2
+CSC 316	Data Structures & Algorithms	4
+CSC 416	Advanced Algorithm Analysis	3
+CSC 211	Introductory .NET Development	3
+CSC 311	Advanced .NET Development	4
+CSC 313	Real World Application Development	3
+CSC 411	Data Driven Systems	3
+CSC 412	Senior Systems	3
+CSC 413	Artificial Intelligence Systems	3
+CSC 496	Software Engineering I	4
+CSC 497	Software Engineering II	4
+CSC 498	Software Engineering III	4

@@ -1,9 +1,15 @@
 import javax.swing.plaf.nimbus.State;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.lang.constant.Constable;
 import java.sql.*;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class DatabaseAccessObject {
     /**
@@ -18,6 +24,13 @@ public class DatabaseAccessObject {
     //GLOBAL VARIABLES GLOBAL VARIABLES GLOBAL VARIABLES GLOBAL VARIABLES
     private static final String dbFileName = "ScheduleDatabase.db"; //what we will name our database
     private static final String connString = "jdbc:sqlite:" + dbFileName; //the connection string for our database
+    private static final String SCHEDULE_TABLE_STRING = "SCHEDULE_TABLE"; //the name of the table we schedule in
+    private static final String COURSE_TABLE_STRING = "COURSES_TABLE"; //the name of our course table
+    private static final String PROFESSOR_TABLE_STRING = "PROFESSOR_TABLE"; //the name of our professor table
+    private static final String CLASSROOM_TABLE_STRING = "CLASSROOM_TABLE";
+    private static final String COURSE_CATALOG_PATH_STRING = "Course_Catalog.txt";//the path of the course catalog we want to use
+    private static final String CLASSROOM_CATALOG_PATH_STRING = "Classroom_Catalog.txt"; //the path of the classroom catalog we want to use
+    private static final String PROFESSOR_CATALOG_PATH_STRING = "Professor_Catalog.txt"; //the path of the professor catalog we want to use
 
     //SUBPROGRAMS SUBPROGRAMS SUBPROGRAMS SUBPROGRAMS SUBPROGRAMS
     private static Connection getConnection() throws ClassNotFoundException, SQLException{
@@ -46,7 +59,7 @@ public class DatabaseAccessObject {
             /* to see if the db exists we will try to get the connection, and execute a sql statement on one of the tables */
             Connection con = getConnection();
             Statement statement = con.createStatement();
-            statement.execute("SELECT * FROM PROFESSOR_TABLE");
+            statement.execute("SELECT * FROM " + PROFESSOR_TABLE_STRING + "");
             blnExists = true;
             con.close();
         }catch (Exception ex){
@@ -66,7 +79,7 @@ public class DatabaseAccessObject {
         boolean blnCreated = false;
         Connection connection = getConnection();
         Statement statement = connection.createStatement();
-        String strSQL = "CREATE TABLE PROFESSOR_TABLE (TUID INTEGER PRIMARY KEY AUTOINCREMENT, PROFESSOR_NAME CHAR(50))";
+        String strSQL = "CREATE TABLE " + PROFESSOR_TABLE_STRING + " (TUID INTEGER PRIMARY KEY AUTOINCREMENT, PROFESSOR_NAME CHAR(50))";
         try{
             statement.execute(strSQL);
             blnCreated = true;
@@ -90,7 +103,7 @@ public class DatabaseAccessObject {
         boolean blnCreated = false;
         Connection connection = getConnection();
         Statement statement = connection.createStatement();
-        String strSQL = "CREATE TABLE COURSES_TABLE (TUID INTEGER PRIMARY KEY AUTOINCREMENT, COURSE_ID CHAR(10), COURSE_TITLE CHAR(100)," +
+        String strSQL = "CREATE TABLE " + COURSE_TABLE_STRING + " (TUID INTEGER PRIMARY KEY AUTOINCREMENT, COURSE_ID CHAR(10), COURSE_TITLE CHAR(100)," +
                 " CREDITS INTEGER)";
         try{
             statement.execute(strSQL);
@@ -116,7 +129,7 @@ public class DatabaseAccessObject {
         boolean blnCreated = false;
         Connection connection = getConnection();
         Statement statement = connection.createStatement();
-        String strSQL = "CREATE TABLE CLASSROOM_TABLE (TUID INTEGER PRIMARY KEY AUTOINCREMENT, CLASSROOM_NAME CHAR(20), CAPACITY INTEGER)";
+        String strSQL = "CREATE TABLE " + CLASSROOM_TABLE_STRING + " (TUID INTEGER PRIMARY KEY AUTOINCREMENT, CLASSROOM_NAME CHAR(20), CAPACITY INTEGER)";
         try{
             statement.execute(strSQL);
             blnCreated = true;
@@ -141,7 +154,7 @@ public class DatabaseAccessObject {
         boolean blnCreated = false;
         Connection connection = getConnection();
         Statement statement = connection.createStatement();
-        String strSQL = "CREATE TABLE SCHEDULE_TABLE (TUID INTEGER PRIMARY KEY AUTOINCREMENT, COURSE_TUID INTEGER, COURSE_SECTION CHAR(5)," +
+        String strSQL = "CREATE TABLE " + SCHEDULE_TABLE_STRING + " (TUID INTEGER PRIMARY KEY AUTOINCREMENT, COURSE_TUID INTEGER, COURSE_SECTION INTEGER," +
                 " CLASSROOM_TUID INTEGER, PROFESSOR_TUID INTEGER, START_TIME CHAR(5), END_TIME CHAR(5), DAYS CHAR(2))";
         try{
             statement.execute(strSQL);
@@ -200,6 +213,67 @@ public class DatabaseAccessObject {
 
         }
     }
+    private void initializeProfessorTable() throws IOException {
+        /**
+         * Name : initializeProfessorTable
+         * Params : none
+         * Returns : none
+         * Purpose : The purpose of this method is to initialize our professor table, we first get all professors from
+         *           our classroom catalog by getting a list of classroom data models from the file interaction object.
+         *           we then try to add the professors to our professor table.
+         */
+        FileInteractionObject fileInteractionObject = new FileInteractionObject(PROFESSOR_CATALOG_PATH_STRING);
+        fileInteractionObject.instanciateBufferedReader();
+        ArrayList<objProfessor> professors = fileInteractionObject.readAllCatalogedProfessors();
+        for(objProfessor p : professors){
+            try{
+                addProfessor(p.getStrProfessorName());
+            }catch (Exception ex){
+                ex.printStackTrace();
+            }
+        }
+    }
+    private void initializeClassroomTable() throws IOException {
+        /**
+         * Name : initializeClassroomTable
+         * Params : none
+         * Returns : none
+         * Purpose : The purpose of this method is to initialize the classroom table. We first get all of the classrooms
+         *           from our classroom catalog using our fileInteraction object. We then loop through all of these classroom
+         *           data object models and insert them into our classroom table.
+         */
+        FileInteractionObject fileInteractionObject = new FileInteractionObject(CLASSROOM_CATALOG_PATH_STRING);
+        fileInteractionObject.instanciateBufferedReader();
+        ArrayList<objClassroom> classrooms = fileInteractionObject.readAllCatalogedClassrooms();
+        for(objClassroom c : classrooms){
+            try{
+                addClassroom(c.getStrClassroomName(), c.getIntCapacity());
+            }catch (Exception ex){
+                ex.printStackTrace();
+            }
+        }
+    }
+    private void initializeCourseTable() throws IOException, SQLException, ClassNotFoundException {
+        /**
+         * Name : initializeCourseTable
+         * Params : None
+         * Returns : None
+         * Purpose : The purpose of this method is to initialize the Course table. We first read in all of the courses
+         *           from our course catalog file and receive them as a list of course data models from our fileInteractionObject.
+         *           We then loop through all of the objects and add them to the courses table
+         */
+        FileInteractionObject fileInteractionObject = new FileInteractionObject(COURSE_CATALOG_PATH_STRING);
+        fileInteractionObject.instanciateBufferedReader();
+        ArrayList<objCourse> courses = fileInteractionObject.readAllCatalogedCourses();
+        for(objCourse c : courses){
+            try {
+                addCourse(c.getStrCourseID(), c.getStrCourseTitle(), c.getIntCreditHours());
+            }catch (Exception ex){
+                ex.printStackTrace();
+            }
+        }
+
+    }
     private void wipeScheduleTable() throws SQLException, ClassNotFoundException {
         /**
          * Name : wipeScheduleTable
@@ -211,10 +285,10 @@ public class DatabaseAccessObject {
         //get connection object and create a statement
         Connection connection = getConnection();
         Statement statement = connection.createStatement();
-        String strSQL = "DELETE FROM SCHEDULE_TABLE";
+        String strSQL = "DELETE FROM " + SCHEDULE_TABLE_STRING + "";
         try{
             statement.execute(strSQL);
-            strSQL = "DELETE FROM SQLITE_SEQUENCE WHERE name='SCHEDULE_TABLE'";
+            strSQL = "DELETE FROM SQLITE_SEQUENCE WHERE name='" + SCHEDULE_TABLE_STRING + "'";
             statement.execute(strSQL);
         }catch (Exception ex){
             ex.printStackTrace();
@@ -254,7 +328,7 @@ public class DatabaseAccessObject {
         }
 
     }
-    public void startUp() throws SQLException, ClassNotFoundException {
+    public void startUp() throws SQLException, ClassNotFoundException, IOException {
         /**
          * Name : startUp
          * Params : none.
@@ -282,9 +356,12 @@ public class DatabaseAccessObject {
             return;
         }
         /* if we make it our here we have no DB because it either never existed or it was destroyed.
-            so let's create our database
+            so let's create our database and initialize our 'static' tables
          */
         createDB();
+        initializeCourseTable();
+        initializeClassroomTable();
+        initializeProfessorTable();
         return;
     }
     public void endSession() throws SQLException, ClassNotFoundException {
@@ -324,7 +401,7 @@ public class DatabaseAccessObject {
         Connection connection = getConnection();
         Statement statement = connection.createStatement();
         //now lets make a string with our sql insert statement
-        String strSQL = "INSERT INTO COURSES_TABLE (COURSE_ID, COURSE_TITLE, CREDITS)" +
+        String strSQL = "INSERT INTO " + COURSE_TABLE_STRING + " (COURSE_ID, COURSE_TITLE, CREDITS)" +
                 " values ('" + strCourseID + "', '" + strCourseTitle + "', " + intCourseHours + ");";
         //try to run the statement
         try{
@@ -352,7 +429,7 @@ public class DatabaseAccessObject {
         Connection connection = getConnection();
         Statement statement = connection.createStatement();
         //now lets make a string with our sql insert statement
-        String strSQL = "INSERT INTO PROFESSOR_TABLE (PROFESSOR_NAME)" +
+        String strSQL = "INSERT INTO " + PROFESSOR_TABLE_STRING + " (PROFESSOR_NAME)" +
                 " values ('" + strProfessorName + "');";
         //try to run the statement
         try{
@@ -381,7 +458,7 @@ public class DatabaseAccessObject {
         Connection connection = getConnection();
         Statement statement = connection.createStatement();
         //now lets make a string with our sql insert statement
-        String strSQL = "INSERT INTO CLASSROOM_TABLE (CLASSROOM_NAME, CAPACITY)" +
+        String strSQL = "INSERT INTO " + CLASSROOM_TABLE_STRING + " (CLASSROOM_NAME, CAPACITY)" +
                 " values ('" + strClassroomName + "', " + intCapacity + ");";
         //try to run the statement
         try{
@@ -391,6 +468,59 @@ public class DatabaseAccessObject {
             ex.printStackTrace();
         }
         //we need to close our db interaction objects
+        statement.close();
+        connection.close();
+        return blnAdded;
+    }
+    private int getCourseSection(String strCourseName) throws SQLException, ClassNotFoundException {
+        /**
+         * Name : getCourseSection
+         * Params : strCourseName - the name of the course that we want to get the section for
+         * Returns : intNextSection - the next available section for the course.
+         * Purpose : the purpose of this method is to get the next available section for the given course. We will
+         *           first execute a sql query on the schedule table to find the max course section, increment it by
+         *           1 and return it.
+         */
+        Connection connection = getConnection();
+        Statement statement = connection.createStatement();
+        String strSQL = "SELECT MAX COURSE_SECTION FROM " + SCHEDULE_TABLE_STRING + " WHERE COURSE_NAME = '" +
+                strCourseName + "';";
+        int intNextSection = 1;
+        //now we want to try and execute our query
+        try{
+            ResultSet resultSet = statement.executeQuery(strSQL);
+            if(resultSet.next()){
+               intNextSection = resultSet.getInt("COURSE_SECTION") + 1;
+            }
+        }catch (Exception ex){
+            ex.printStackTrace();
+            intNextSection = -1;
+        }
+
+        statement.close();
+        connection.close();
+        return intNextSection;
+    }
+    public boolean addSchedule(objFileData fileData) throws SQLException, ClassNotFoundException {
+        boolean blnAdded = false;
+        //get connection and sql statement objects
+        Connection connection = getConnection();
+        Statement statement = connection.createStatement();
+        //now we need to get the objects for our professor, classroom, and course to make an entry in our relation table SCHEDULE_tABLE
+        objProfessor professor = getProfessor(fileData.getStrProfessorName());
+        objCourse course = getCourse(fileData.getStrCourseName());
+        objClassroom classroom = getClassroom("A");
+        String strSQL = "INSERT INTO TABLE " + SCHEDULE_TABLE_STRING + " (COURSE_TUID, COURSE_SECTION, CLASSROOM_TUID, PROFESSOR_TUID," +
+                " START_TIME, END_TIME, DAYS) VALUES (" + course.getIntCourseTUID() + ", '" +  "strCourseSection" + "', " +
+                classroom.getIntClassroomTUID() + ", " + professor.getIntProfessorTUID() + ", '" + fileData.getStrStartTime() +
+                "', '" + fileData.getStrEndTime() + "', '" + fileData.getStrDays() + "';";
+        try{
+            blnAdded = statement.execute(strSQL);
+        }catch (Exception ex){
+            ex.printStackTrace();
+            blnAdded = false;
+        }
+        //make sure to close db interaction objects
         statement.close();
         connection.close();
         return blnAdded;
@@ -417,7 +547,7 @@ public class DatabaseAccessObject {
         Connection connection = getConnection();
         Statement statement = connection.createStatement();
         //now lets make a string with our sql insert statement
-        String strSQL = "INSERT INTO SCHEDULE_TABLE (COURSE_TUID, COURSE_SECTION, CLASSROOM_TUID, PROFESSOR_TUID," +
+        String strSQL = "INSERT INTO " + SCHEDULE_TABLE_STRING + " (COURSE_TUID, COURSE_SECTION, CLASSROOM_TUID, PROFESSOR_TUID," +
                 " START_TIME, END_TIME, DAYS) values (" + intCourseTUID + ", '" + strCourseSection + "', " +
                 intClassroomTUID + ", " + intProfessorTUID + ", '" + strStartTime + "', '" + strEndTime + "', '" + strDays
                 + "');";
@@ -431,6 +561,113 @@ public class DatabaseAccessObject {
         statement.close();
         connection.close();
         return blnAdded;
+    }
+    private String getStrDaysStatement(String strDays){
+        /**
+         * Name : getStrDaysStatement
+         * Params : strDays - the days we want to make a statement for
+         * Returns : strDaysStatement - the statement for the given days.
+         * Purpose : the purpose of this method is to make sure that we have a statement that would cover
+         *           just M,W,T,R as DAYS column data in our SCHEDULE_TABLE when we want to search for scheduled courses.
+         * Notes :
+         */
+        String strDaysStatement = "";
+        switch (strDays){
+            case "MW":
+                strDaysStatement = "DAYS = 'M' OR 'W' OR 'MW'";
+            case "TR":
+                strDaysStatement = "DAYS = 'T' OR 'R' OR 'TR'";
+            default:
+                strDaysStatement = "DAYS = '" + strDays + "'";
+        }
+        return strDaysStatement;
+    }
+    public ArrayList<objSchedule> getScheduleDays(String strDays) throws SQLException, ClassNotFoundException {
+        /**
+         * Name : getSchedule
+         * Params : strDays - the days we will try to find a scheduled course on.
+         * Returns : lstSchedule - a list of objSchedule objects that will contain all scheduled courses on the given
+         *                         strDays.
+         * Purpose : The purpose of this method is to try to find scheduled courses on the given days and return an
+         *           ArrayList with all of these courses. If we do not find any an empty list is returned.
+         * Notes :
+         */
+        Connection connection = getConnection(); //our sql connection object
+        Statement statement = connection.createStatement(); //a sql statement object
+        String strSQL = "SELECT * FROM "+ SCHEDULE_TABLE_STRING + " WHERE " + getStrDaysStatement(strDays);
+        ArrayList<objSchedule> lstSchedule = new ArrayList<objSchedule>();
+        try{
+            ResultSet resultSet = statement.executeQuery(strSQL);
+            while(resultSet.next()){
+                objSchedule schedule = new objSchedule(resultSet.getInt("TUID"), resultSet.getInt("COURSE_TUID"),
+                        resultSet.getString("COURSE_SECTION"), resultSet.getInt("CLASSROOM_TUID"),
+                        resultSet.getInt("PROFESSOR_TUID"), resultSet.getString("START_TIME"), resultSet.getString("END_TIME"),
+                        resultSet.getString("DAYS"));
+                lstSchedule.add(schedule);
+            }
+        } catch (Exception ex){
+            ex.printStackTrace();
+            return null;
+        }
+        //close db interaction objects
+        statement.close();
+        connection.close();
+        return lstSchedule;
+    }
+    public ArrayList<objClassroom> getAllClassrooms() throws SQLException, ClassNotFoundException {
+        /**
+         * Name : getAllClassrooms
+         * Params : none
+         * Returns : lstClassrooms - an arraylist containing data object models of all the classrooms in our Classrooms table
+         * Purpose : the purpose of this method is to get an arraylist with all of our classrooms in it.
+         * Notes :
+         */
+        ArrayList<objClassroom> lstClassrooms = new ArrayList<>();
+        Connection connection = getConnection();
+        Statement statement = connection.createStatement();
+        String strSQL = "SELECT * FROM " + CLASSROOM_TABLE_STRING + ";";
+        try{
+            ResultSet resultSet = statement.executeQuery(strSQL);
+            while(resultSet.next()){
+                lstClassrooms.add(new objClassroom(resultSet.getString("CLASSROOM_NAME"), resultSet.getInt("CAPACITY")));
+            }
+        }catch (Exception ex){
+            ex.printStackTrace();
+            lstClassrooms = null;
+        }
+        statement.close();
+        connection.close();
+        return lstClassrooms;
+    }
+    public objSchedule getOneScheduledCourse(String strStartTime, String strEndTime, String strDays) throws SQLException, ClassNotFoundException {
+        /**
+         * Name : getOneScheduledCourse
+         * Params : strStartTime - the startTime of the period that we want to search for a course in.
+         *          strEndTime - the end time of the period that we want to search for a course in.
+         *          strDays - the days that we want to search for a scheduled course during.
+         * Returns : schedule - an objSchedule object with data for a SCHEDULE_TABLE entry, we will return null
+         *                      if we do not find an entry in our time period.
+         * Purpose : the purpose of this method is to try to get a single scheduled course during our given time
+         *           slot on the given days.
+         * Notes :
+         */
+        ArrayList<objSchedule> lstSchedule = getScheduleDays(strDays); //an arraylist with all scheduled courses on the given days
+        //first return null if we do not have a course on these day(s)
+        if(lstSchedule == null || lstSchedule.size() == 0){
+            return null;
+        }
+        //loop through each objSchedule in lstSchedule
+        for(objSchedule s : lstSchedule){
+            LocalTime localTime = LocalTime.parse(strStartTime);
+            if(localTime.isAfter(LocalTime.parse(s.getStrStartTime())) && localTime.isBefore(LocalTime.parse(s.getStrEndTime()))){
+                return s;
+            }
+            localTime = LocalTime.parse(strEndTime);
+            if(localTime.isAfter(LocalTime.parse(s.getStrStartTime())) && localTime.isBefore(LocalTime.parse(s.getStrEndTime()))){
+                return s;
+            }
+        }
+        return null;
     }
     public ArrayList<objSchedule> readAllScheduled() throws SQLException, ClassNotFoundException {
         /**
@@ -446,7 +683,7 @@ public class DatabaseAccessObject {
         //get connection and sql statement objects
         Connection connection = getConnection();
         Statement statement = connection.createStatement();
-        String strSQL = "SELECT * FROM SCHEDULE_TABLE";
+        String strSQL = "SELECT * FROM " + SCHEDULE_TABLE_STRING + "";
         try{
             //execute statement and read first
             ResultSet resultSet = statement.executeQuery(strSQL);
@@ -464,6 +701,9 @@ public class DatabaseAccessObject {
             ex.printStackTrace();
             return null;
         }
+        //close db interaction objects
+        statement.close();
+        connection.close();
         return lstScheduled;
     }
     public objCourse getCourse(String strCourseID) throws SQLException, ClassNotFoundException {
@@ -482,7 +722,7 @@ public class DatabaseAccessObject {
         Connection connection = getConnection();
         Statement statement = connection.createStatement();
         //and a string to try and find a course with this id
-        String strSQL = "SELECT * FROM COURSES_TABLE WHERE COURSE_ID = '" + strCourseID + "';";
+        String strSQL = "SELECT * FROM " + COURSE_TABLE_STRING + " WHERE COURSE_ID = '" + strCourseID + "';";
         //now try and execute that statement
         try{
             ResultSet resultSet = statement.executeQuery(strSQL);
@@ -513,7 +753,7 @@ public class DatabaseAccessObject {
         Connection connection = getConnection();
         Statement statement = connection.createStatement();
         //and a string to try and find a course with this id
-        String strSQL = "SELECT * FROM COURSES_TABLE WHERE TUID = '" + intCourseTUID + "';";
+        String strSQL = "SELECT * FROM " + COURSE_TABLE_STRING + " WHERE TUID = '" + intCourseTUID + "';";
         //now try and execute that statement
         try{
             ResultSet resultSet = statement.executeQuery(strSQL);
@@ -545,7 +785,7 @@ public class DatabaseAccessObject {
         Connection connection = getConnection();
         Statement statement = connection.createStatement();
         //and a string to try and find a course with this id
-        String strSQL = "SELECT * FROM CLASSROOM_TABLE WHERE CLASSROOM_NAME = '" + strClassroomName + "';";
+        String strSQL = "SELECT * FROM " + CLASSROOM_TABLE_STRING + " WHERE CLASSROOM_NAME = '" + strClassroomName + "';";
         //now try and execute that statement
         try{
             ResultSet resultSet = statement.executeQuery(strSQL);
@@ -574,7 +814,7 @@ public class DatabaseAccessObject {
         Connection connection = getConnection();
         Statement statement = connection.createStatement();
         //and a string to try and find a course with this id
-        String strSQL = "SELECT * FROM PROFESSOR_TABLE WHERE PROFESSOR_NAME = '" + strProfessorName + "';";
+        String strSQL = "SELECT * FROM " + PROFESSOR_TABLE_STRING + " WHERE PROFESSOR_NAME = '" + strProfessorName + "';";
         //now try and execute that statement
         try{
             ResultSet resultSet = statement.executeQuery(strSQL);

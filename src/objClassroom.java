@@ -19,10 +19,21 @@ public class objClassroom{
          * Params : intClassroomTUID - The TUID coressponding to this classroom's entry in the classroom table, ex. 1
          *          strClassroomName - The name of this classroom, ex. A
          *          intCapacity - the capacity of this classroom, ex. 30
-         * Purpose : This is the paramaterized constructor for objClassroom. This constructor will be used to create
+         * Purpose : This is a parameterized constructor for objClassroom. This constructor will be used to create
          *           an instance of objClassroom which models data of an entry in our classroom table.
          */
         this.intClassroomTUID = intClassroomTUID;
+        this.strClassroomName = strClassroomName;
+        this.intCapacity = intCapacity;
+    }
+    public objClassroom(String strClassroomName, int intCapacity){
+        /**
+         * Name : objClassroom
+         * Params : strClassroomName - The name of this classroom, ex. A
+         *          intCapacity - the capacity of this classroom, ex. 30
+         * Purpose : This is a parameterized constructor for objClassroom. This constructor will be used when we
+         *           read our classrooms in from the catalog file, and added into our classroom table.
+         */
         this.strClassroomName = strClassroomName;
         this.intCapacity = intCapacity;
     }

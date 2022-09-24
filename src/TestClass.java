@@ -33,34 +33,13 @@ public class TestClass {
         return true;
 
     }
-    public static boolean DBTest2() throws SQLException, ClassNotFoundException {
-        /**
-         * Name : Test2
-         * Returns : boolean - true -> test passed, false -> test failed
-         * Purpose : The purpose of this method is to test if we can create an entity in each of our database tables
-         *           when the create method is given valid data.
-         * Notes :
-         */
-        System.out.println("Running DBTest2 ...");
-        if(!DAO.addCourse("CSC 105", "PROGRAMMING", 4)){
-            return false;
-        }
-        if(!DAO.addClassroom("A", 30)){
-            return false;
-        }
-        if(!DAO.addProfessor("DWAYNE JOHNSTON")){
-            return false;
-        }
-        if(!DAO.addSchedule(1, "01", 1, 1, "08:30", "10:30", "MW")){
-            return false;
-        }
-        return true;
-    }
+
     public static boolean DBTest3() throws SQLException, ClassNotFoundException {
         /**
          * Name : Test3
          * Returns : boolean - true -> test passed, false -> test failed
-         * Purpose : the purpose of this method is to see if we can search for objects in our database given good input
+         * Purpose : the purpose of this method is to see if we can search for objects in our database given good input.
+         *           This test also lets us know if our professor, course and classroom tables are being initialized properly
          * Notes : This test does not include anything from the schedule table
          */
         System.out.println("Running DBTest3 ...");
@@ -72,7 +51,7 @@ public class TestClass {
         System.out.println(course.getIntCourseTUID() + " : " + course.getStrCourseID() + " : " +
                 course.getStrCourseTitle() + " : " + course.getIntCreditHours());
         //now we do professor
-        objProfessor professor = DAO.getProfessor("DWAYNE JOHNSTON");
+        objProfessor professor = DAO.getProfessor("James");
         if(professor == null){
             System.out.println("Failed to get Professor");
             return false;
@@ -105,7 +84,7 @@ public class TestClass {
 
         ArrayList<objSchedule> schedule = DAO.readAllScheduled();
         //check that the object is not null and contains 4 objSchedule
-        if(schedule == null || schedule.size() != 4){
+        if(schedule == null || schedule.size() != 3){
 
             return false;
         }
@@ -140,9 +119,9 @@ public class TestClass {
          */
         System.out.println("BEGIN DATABASE TESTS .....");
         System.out.println("DBTest1 : " + DBTest1());
-        System.out.println("DBTest2 : " + DBTest2());
+        //dbtest2 deleted
         System.out.println("DBTest3 : " + DBTest3());
-        System.out.println("DBTest4 : " + DBTest4());
+        System.out.println("DBTest4 : " + DBTest4() + "Disregard false if 1 input on DBTest1.");
         System.out.println("DBTest5 : " + DBTest5());
         System.out.println("END DATABASE TESTS .....");
     }
@@ -275,7 +254,16 @@ public class TestClass {
             return false;
         }
         return true;
+    }
+    public static boolean ScheduleTest2(){
+        /**
+         * Name : ScheduleTest2
+         * Returns : boolean - true -> test passed, false -> test failed.
+         * Purpose : The purpose of this test is to see if our method to not schedule two classes within the same
+         *           time slot works.
+         */
 
+        return true;
     }
     public static void runScheduleTests(){
         /**

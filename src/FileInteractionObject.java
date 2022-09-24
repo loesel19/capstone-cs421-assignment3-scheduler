@@ -19,6 +19,7 @@ public class FileInteractionObject {
     private String strFilePath;
     BufferedReader bufferedReader;
 
+
     public FileInteractionObject(String strFilePath){
         /**
          * Name : FileInteractionObject
@@ -87,5 +88,72 @@ public class FileInteractionObject {
         }
 
         return lstFileData;
+    }
+    public ArrayList<objCourse> readAllCatalogedCourses() throws IOException {
+        /**
+         * Name : readAllCatalogedCourses
+         * Params : None
+         * Returns : lstCourses - an arrayList of objCourse objects that contains data models for all cataloged courses.
+         * Purpose : the purpose of this method is to read the course catalog file and return an arraylist of all the
+         *           courses as data models.
+         */
+        ArrayList<objCourse> lstCourses = new ArrayList<objCourse>();
+        String line; //a line of data from the file
+        //now read until we reach the end of file
+        while((line = bufferedReader.readLine()) != null){
+            String[] strValues = line.split("\t");
+            //now try to add a new objCourse to the list with params course_name, course_title, credits
+            try {
+                lstCourses.add(new objCourse(strValues[0], strValues[1], Integer.parseInt(strValues[2])));
+            }catch (Exception ex){
+                ex.printStackTrace();
+                return null;
+            }
+
+        }
+        return lstCourses;
+    }
+    public ArrayList<objClassroom> readAllCatalogedClassrooms() throws IOException {
+        /**
+         * Name : readAllCatalogedClassrooms
+         * Params : none
+         * Returns : lstClassrooms - an arraylist of objClassroom objects that contain data models for all cataloged classrooms.
+         * Purpose : The purpose of this method is to read all classrooms from the catalog file and return an arraylist
+         *           of all the classrooms as data models.
+         */
+        ArrayList<objClassroom> lstClassrooms = new ArrayList<objClassroom>();
+        String line; //a line of data from the file
+        //now we want to read until we reach end of file
+        while((line = bufferedReader.readLine()) != null){
+            String[] strValues = line.split("\t");
+            try{
+                lstClassrooms.add(new objClassroom(strValues[0], Integer.parseInt(strValues[1])));
+            }catch (Exception ex){
+                ex.printStackTrace();
+                return null;
+            }
+        }
+        return lstClassrooms;
+    }
+    public ArrayList<objProfessor> readAllCatalogedProfessors() throws IOException {
+        /**
+         * Name : readAllCatalogedProfessors
+         * Params : none
+         * Returns : lstProfessors - an arraylist of professor data model objects with all cataloged professors.
+         * Purpose : the purpose of this method is to read all of the professors from our professor catalog file, and
+         *           return an arraylist of all the professors as data models
+         */
+        ArrayList<objProfessor> lstProfessors = new ArrayList<objProfessor>();
+        String line; //a line of data from the file
+        //now read each line of the file until we reach end of file
+        while((line = bufferedReader.readLine()) != null){
+            try{
+                lstProfessors.add(new objProfessor(line));
+            }catch(Exception ex){
+                ex.printStackTrace();
+                return null;
+            }
+        }
+        return lstProfessors;
     }
 }
