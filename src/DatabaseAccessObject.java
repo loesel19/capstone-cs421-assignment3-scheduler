@@ -501,7 +501,7 @@ public class DatabaseAccessObject {
         connection.close();
         return intNextSection;
     }
-    public boolean addSchedule(objFileData fileData) throws SQLException, ClassNotFoundException {
+    public boolean addSchedule(objFileData fileData, String strClassroom) throws SQLException, ClassNotFoundException {
         boolean blnAdded = false;
         //get connection and sql statement objects
         Connection connection = getConnection();

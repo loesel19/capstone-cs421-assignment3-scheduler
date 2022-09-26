@@ -4,6 +4,9 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.nio.Buffer;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
 public class FileInteractionObject {
     /**
@@ -16,25 +19,16 @@ public class FileInteractionObject {
      *                to read in data from a file in a specified format. We will use an object to get this data.
      */
 
-    private String strFilePath;
+
     BufferedReader bufferedReader;
 
-
-    public FileInteractionObject(String strFilePath){
-        /**
-         * Name : FileInteractionObject
-         * Params : strFilePath - the path to the file that we will be reading.
-         * Purpose : This is the paramaterized constructor for the FileInteractionObject. We
-         *           simply take an input file path and set this objects strFilePath field to that file path.
-         */
-        this.strFilePath = strFilePath;
-    }
-    public boolean instanciateBufferedReader() throws FileNotFoundException {
+    public boolean instanciateBufferedReader(String strFilePath) throws FileNotFoundException {
         /**
          * Name : instanciateBufferedReader
          * Params : none.
          * Returns : boolean - true -> successfully instanced bufferedReader, false -> failure
          */
+
         try {
             bufferedReader = new BufferedReader(new FileReader(strFilePath));
             return true;
@@ -155,5 +149,37 @@ public class FileInteractionObject {
             }
         }
         return lstProfessors;
+    }
+    public HashMap<String, ArrayList<String>> getTimes() throws IOException {
+        /**
+         *
+         */
+        HashMap<String, ArrayList<String>> mapTimes = new HashMap<>();
+        String line;
+        String key = "";
+        ArrayList<String> lstTemp = new ArrayList<>();
+        if((line = bufferedReader.readLine()) != null) {
+            key = line.split(" ")[0] + line.split(" ")[1];
+        }
+        while((line = bufferedReader.readLine()) != null){
+            if(line.split(" ").length > 1){
+                //now we are on to a new day/hours section
+                //add old one to hashmap
+                mapTimes.put(key, lstTemp);
+                lstTemp = new ArrayList<>();
+                key = line.split(" ")[0] + line.split(" ")[1];
+                continue;
+            }
+            lstTemp.add(line);
+        }
+        mapTimes.put(key, lstTemp);
+
+        for (Map.Entry<String, ArrayList<String>> entry : mapTimes.entrySet()){
+            ArrayList<String> list = entry.getValue();
+            for(String s : list){
+                System.out.println(entry.getKey() + " = " + s);
+            }
+        }
+        return mapTimes;
     }
 }
