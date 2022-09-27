@@ -1,8 +1,7 @@
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Scanner;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -111,6 +110,39 @@ public class TestClass {
             return false;
         }
     }
+    public static boolean DBTest6() throws SQLException, ClassNotFoundException {
+        /**
+         * Name : DBTest6
+         * Returns : boolean - true -> test passed, false -> test failed
+         * Purpose : This test checks to see if our database access object method for finding an available slot
+         *           will work when there are no classes scheduled in that spot
+         */
+        System.out.println("STARTING DBTEST 6 ...");
+        objClassroom classroom = DAO.getFreeClassroom("10:00", "11:00", "M");
+        if(classroom != null){
+            System.out.println("getFreeClassroom method returned " + classroom.getStrClassroomName());
+            return true;
+        }
+        return false;
+    }
+    public static boolean DBTest7() throws SQLException, ClassNotFoundException {
+        /**
+         * Name : DBTest6
+         * Returns : boolean - true -> test passed, false -> test failed
+         * Purpose : This test will check to see if our method for finding a free classroom will grab room B when A
+         *           is taken, C when A and B are taken and return -1 if all 3 are taken
+         */
+        System.out.println("STARTING DBTEST 7 ...");
+        DAO.addSchedule(1, "1", 1, 1, "8:30", "10:30", "M");
+        objClassroom classroom = DAO.getFreeClassroom("8:30", "10:30", "M");
+        System.out.println(classroom.getIntClassroomTUID() + " " + classroom.getStrClassroomName());
+        if(classroom.intClassroomTUID != 2){
+            return false;
+        }
+        DAO.addSchedule(1, "1", 2, 1, "8:30", "10:30", "M");
+        classroom = DAO.getFreeClassroom("8:30", "10:30", "TR");
+        return true;
+    }
     public static void runDBTests() throws SQLException, ClassNotFoundException {
         /**
          * Name : runDBTests
@@ -121,8 +153,10 @@ public class TestClass {
         System.out.println("DBTest1 : " + DBTest1());
         //dbtest2 deleted
         System.out.println("DBTest3 : " + DBTest3());
-        System.out.println("DBTest4 : " + DBTest4() + "Disregard false if 1 input on DBTest1.");
+        System.out.println("DBTest4 : " + DBTest4() + " Disregard false if 1 input on DBTest1.");
         System.out.println("DBTest5 : " + DBTest5());
+        System.out.println("DBTest6 : " + DBTest6());
+        System.out.println("DBTest7 : " + DBTest7());
         System.out.println("END DATABASE TESTS .....");
     }
     public static boolean FileTest1() throws IOException {
@@ -133,8 +167,8 @@ public class TestClass {
          *           read a single line of it.
          */
         System.out.println("STARTING FILE TEST 1 ...");
-        FileInteractionObject fileInteractionObject = new FileInteractionObject(testFilePath);
-        if(!fileInteractionObject.instanciateBufferedReader()){
+        FileInteractionObject fileInteractionObject = new FileInteractionObject();
+        if(!fileInteractionObject.instanciateBufferedReader(testFilePath)){
             return false;
         }
         try {
@@ -154,8 +188,8 @@ public class TestClass {
          * Purpose : The purpose of this method is to try and read all lines of our file into a list.
          */
         System.out.println("STARTING FILE TEST 2 ...");
-        FileInteractionObject fileInteractionObject = new FileInteractionObject(testFilePath);
-        if(!fileInteractionObject.instanciateBufferedReader()){
+        FileInteractionObject fileInteractionObject = new FileInteractionObject();
+        if(!fileInteractionObject.instanciateBufferedReader(testFilePath)){
             return false;
         }
         ArrayList<objFileData> lstFileData = fileInteractionObject.readAllFileLine();
@@ -177,8 +211,8 @@ public class TestClass {
         String strPath = "";
         System.out.println("Please enter the path to the file you would like to Schedule.");
         strPath = sc.next();
-        FileInteractionObject fileInteractionObject = new FileInteractionObject(strPath);
-        if(!fileInteractionObject.instanciateBufferedReader()){
+        FileInteractionObject fileInteractionObject = new FileInteractionObject();
+        if(!fileInteractionObject.instanciateBufferedReader(strPath)){
             System.out.println("Bad path");
             return false;
         }
@@ -186,6 +220,38 @@ public class TestClass {
         ArrayList<objFileData> lstFileData = fileInteractionObject.readAllFileLine();
         for(objFileData d : lstFileData){
             System.out.println(d.toString());
+        }
+        return true;
+    }
+    public static boolean FileTest4() throws FileNotFoundException {
+        /**
+         * Name : FileTest4
+         * Returns : boolean - true -> test passed, false -> test failed
+         * Purpose : The purpose of this test is to see if we can read the cataloged course slots into a hashmap.
+         *           we also print them out if output wanted by test.
+         */
+        FileInteractionObject fileInteractionObject = new FileInteractionObject();
+        fileInteractionObject.instanciateBufferedReader("Schedule_Slot_Catalog.txt");
+        HashMap<String, ArrayList<String>> map = new HashMap<>();
+        try{
+            map = fileInteractionObject.getTimes();
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            return false;
+        }
+        Scanner sc= new Scanner(System.in);
+        System.out.println("Would you like to see all possible time slots? [y/n]");
+        String strInput = "";
+        while(!strInput.equals("y") && !strInput.equals("n"))
+            strInput = sc.next().toLowerCase(Locale.ROOT);
+        if(strInput.equals("y")){
+            for(Map.Entry<String, ArrayList<String>> e : map.entrySet()){
+                System.out.print("--" + e.getKey() + "--  ");
+                for (String s : e.getValue()){
+                    System.out.print(s + " ");
+                }
+                System.out.println("");
+            }
         }
         return true;
     }
@@ -200,6 +266,7 @@ public class TestClass {
         System.out.println("FileTest1 : " + FileTest1());
         System.out.println("FileTest2 : " + FileTest2());
         System.out.println("FileTest3 : " + FileTest3());
+        System.out.println("FileTest4 : " + FileTest4());
         System.out.println("END FILE INTERACTION TESTS .....");
     }
     public static boolean ScheduleTest1(){

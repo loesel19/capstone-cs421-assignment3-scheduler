@@ -174,12 +174,7 @@ public class FileInteractionObject {
         }
         mapTimes.put(key, lstTemp);
 
-        for (Map.Entry<String, ArrayList<String>> entry : mapTimes.entrySet()){
-            ArrayList<String> list = entry.getValue();
-            for(String s : list){
-                System.out.println(entry.getKey() + " = " + s);
-            }
-        }
+
         return mapTimes;
     }
 }

@@ -81,12 +81,14 @@ public class SchedulerObject {
          *           will change the time or day depending on scheduling criteria and try again.
          * Notes :
          */
+        String strSection = "";
+        int intCredits = 4;
         //see if the first requested slot is open.
         //FIRST PART, check original time on requested days and adjacent days
-        String strFreeClassroom = databaseAccessObject.getFreeClassroom(fileData.getStrStartTime(), fileData.getStrEndTime(), fileData.getStrDays());
-        if(!strFreeClassroom.equals("-1")){
+        objClassroom freeClassroom = databaseAccessObject.getFreeClassroom(fileData.getStrStartTime(), fileData.getStrEndTime(), fileData.getStrDays());
+        if(freeClassroom != null){
             //we found a free classroom, lets schedule theis class.
-            databaseAccessObject.addSchedule(fileData, strFreeClassroom);
+            databaseAccessObject.addSchedule(fileData, freeClassroom);
             //return true to not execute the rest of the function
             return true;
         }
@@ -95,10 +97,10 @@ public class SchedulerObject {
         objFileData originalFileData = fileData;
         //now we want to switch days, and try to schedule once
         fileData.setStrDays(changeDays(fileData.getStrDays()));
-        strFreeClassroom = databaseAccessObject.getFreeClassroom(fileData.getStrStartTime(), fileData.getStrEndTime(), fileData.getStrDays());
-        if(!strFreeClassroom.equals("-1")){
+        freeClassroom = databaseAccessObject.getFreeClassroom(fileData.getStrStartTime(), fileData.getStrEndTime(), fileData.getStrDays());
+        if(freeClassroom != null){
             //we found a classroom on the next days for the same timeslot, schedule class
-            databaseAccessObject.addSchedule(fileData, strFreeClassroom);
+            databaseAccessObject.addSchedule(fileData, freeClassroom);
             return true;
         }
         //we could not find a classRoom on the adjacent days, so now we look at all timeslots after the original time on the original days.
@@ -111,9 +113,9 @@ public class SchedulerObject {
         //we need to keep looking for matches until we hit either the last slot of these days or the original time
         while(!fileData.getStrStartTime().equals(originalFileData.getStrStartTime()) && !fileData.getStrStartTime().equals("-1")){
             //try to get a free classroom
-            strFreeClassroom = databaseAccessObject.getFreeClassroom(fileData.getStrStartTime(), fileData.getStrEndTime(), fileData.getStrDays());
-            if(!strFreeClassroom.equals("-1")){
-                databaseAccessObject.addSchedule(fileData, strFreeClassroom);
+            freeClassroom = databaseAccessObject.getFreeClassroom(fileData.getStrStartTime(), fileData.getStrEndTime(), fileData.getStrDays());
+            if(freeClassroom != null){
+                databaseAccessObject.addSchedule(fileData, freeClassroom);
                 return true;
             }
             fileData = getNextTime(fileData);
@@ -124,43 +126,61 @@ public class SchedulerObject {
         fileData.setStrStartTime(originalFileData.getStrStartTime());
         fileData.setStrEndTime(originalFileData.getStrEndTime());
         while(!fileData.getStrStartTime().equals("-1")){
-            strFreeClassroom = databaseAccessObject.getFreeClassroom(fileData.getStrStartTime(), fileData.getStrEndTime(), fileData.getStrDays());
-            if(!strFreeClassroom.equals("-1")){
-                databaseAccessObject.addSchedule(fileData, strFreeClassroom);
+            freeClassroom = databaseAccessObject.getFreeClassroom(fileData.getStrStartTime(), fileData.getStrEndTime(), fileData.getStrDays());
+            if(freeClassroom != null){
+                databaseAccessObject.addSchedule(fileData, freeClassroom);
                 return true;
             }
             //not open change times
             fileData = getNextTime(fileData);
             if(fileData.getStrStartTime().equals("-1")){
-                fileData.setStrStartTime(getFirstStartTime());
-                fileData.setStrEndTime(getFirstEndTime());
+                String[] strFirstTimeSlot = getFirstTimeSlot(intCredits);
+                fileData.setStrStartTime(strFirstTimeSlot[0]);
+                fileData.setStrEndTime(strFirstTimeSlot[1]);
             }
         }
         //FOURTH PART, check prior times on original days.
         fileData.setStrDays(originalFileData.getStrDays());
-        fileData.setStrStartTime(getFirstStartTime());
-        fileData.setStrEndTime(getFirstEndTime());
+        String[] strFirstTimeSlot = getFirstTimeSlot(intCredits);
+        fileData.setStrStartTime(strFirstTimeSlot[0]);
+        fileData.setStrEndTime(strFirstTimeSlot[1]);
         while(!fileData.getStrStartTime().equals(originalFileData.getStrStartTime())){
-            strFreeClassroom = databaseAccessObject.getFreeClassroom(fileData.getStrStartTime(), fileData.getStrEndTime(), fileData.getStrDays());
-            if(!strFreeClassroom.equals("-1")){
-                databaseAccessObject.addSchedule(fileData, strFreeClassroom);
+            freeClassroom = databaseAccessObject.getFreeClassroom(fileData.getStrStartTime(), fileData.getStrEndTime(), fileData.getStrDays());
+            if(freeClassroom != null){
+                databaseAccessObject.addSchedule(fileData, freeClassroom);
                 return true;
             }
             fileData = getNextTime(fileData);
         }
         //FIFTH PART, Check Fridays
         fileData.setStrDays("F");
-        fileData.setStrStartTime(getFirstStartTime());
-        fileData.setStrEndTime(getFirstFridayEndTime());
+        String[] strFirstFridaySlot = getFirstFridaySlot(intCredits);
+        fileData.setStrStartTime(strFirstFridaySlot[0]);
+        fileData.setStrEndTime(strFirstFridaySlot[1]);
         while(!fileData.getStrStartTime().equals("-1")){
-            if(!strFreeClassroom.equals("-1")){
-                databaseAccessObject.addSchedule(fileData, strFreeClassroom);
+            freeClassroom = databaseAccessObject.getFreeClassroom(fileData.getStrStartTime(), fileData.getStrStartTime(), fileData.getStrDays());
+            if(freeClassroom != null){
+                databaseAccessObject.addSchedule(fileData, freeClassroom);
                 return true;
             }
-            fileData = getNextTimeFriday(fileData);
+            fileData = getNextTimeFriday(fileData, intCredits);
         }
         //class was not able to be scheduled
-        System.out.println("Could not schedule " + );
+        System.out.println("Could not schedule " + fileData.toString() + strSection);
+        return false;
+    }
+    public String[] getFirstFridaySlot(int intCredits){
+        String[] strTimeSlot = {"",""};
+
+        return strTimeSlot;
+    }
+    public String[] getFirstTimeSlot(int intCredits){
+        String[] strTimeSlot = {"", ""};
+
+        return strTimeSlot;
+    }
+    public objFileData getNextTimeFriday(objFileData fileData, int intCredits){
+        return  fileData;
     }
 
     private boolean scheduleThreeCredit(objFileData fileData) {
@@ -188,29 +208,6 @@ public class SchedulerObject {
          *           or not.
          * Notes :
          */
-        //the first thing we want to do is see if we can schedule this course during the originally designated time slot
-        DatabaseAccessObject databaseAccessObject = new DatabaseAccessObject();
-        objSchedule schedule = databaseAccessObject.getOneScheduledCourse(fileData.getStrStartTime(), fileData.getStrEndTime(),
-                fileData.getStrDays());
-        ArrayList<objClassroom> lstClassrooms = databaseAccessObject.getAllClassrooms();
-        if(schedule == null){
-                if (databaseAccessObject.addSchedule(fileData)) {
-                     return true;
-                }
-        }else{
-            while(!fileData.getStrDays().equals("-1")){
-                while(!fileData.getStrStartTime().equals("-1")){
-                    fileData = getNextTime(fileData);
-                    schedule = databaseAccessObject.getOneScheduledCourse(fileData.getStrStartTime(), fileData.getStrEndTime(),
-                            fileData.getStrDays());
-                    if(schedule == null) {
-                        databaseAccessObject.addSchedule(fileData);
-                        return true;
-                    }
-                }
-                fileData.setStrDays(changeDays(fileData.getStrDays()));
-            }
-        }
 
         return false;
     }

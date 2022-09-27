@@ -222,8 +222,8 @@ public class DatabaseAccessObject {
          *           our classroom catalog by getting a list of classroom data models from the file interaction object.
          *           we then try to add the professors to our professor table.
          */
-        FileInteractionObject fileInteractionObject = new FileInteractionObject(PROFESSOR_CATALOG_PATH_STRING);
-        fileInteractionObject.instanciateBufferedReader();
+        FileInteractionObject fileInteractionObject = new FileInteractionObject();
+        fileInteractionObject.instanciateBufferedReader(PROFESSOR_CATALOG_PATH_STRING);
         ArrayList<objProfessor> professors = fileInteractionObject.readAllCatalogedProfessors();
         for(objProfessor p : professors){
             try{
@@ -242,8 +242,8 @@ public class DatabaseAccessObject {
          *           from our classroom catalog using our fileInteraction object. We then loop through all of these classroom
          *           data object models and insert them into our classroom table.
          */
-        FileInteractionObject fileInteractionObject = new FileInteractionObject(CLASSROOM_CATALOG_PATH_STRING);
-        fileInteractionObject.instanciateBufferedReader();
+        FileInteractionObject fileInteractionObject = new FileInteractionObject();
+        fileInteractionObject.instanciateBufferedReader(CLASSROOM_CATALOG_PATH_STRING);
         ArrayList<objClassroom> classrooms = fileInteractionObject.readAllCatalogedClassrooms();
         for(objClassroom c : classrooms){
             try{
@@ -262,8 +262,8 @@ public class DatabaseAccessObject {
          *           from our course catalog file and receive them as a list of course data models from our fileInteractionObject.
          *           We then loop through all of the objects and add them to the courses table
          */
-        FileInteractionObject fileInteractionObject = new FileInteractionObject(COURSE_CATALOG_PATH_STRING);
-        fileInteractionObject.instanciateBufferedReader();
+        FileInteractionObject fileInteractionObject = new FileInteractionObject();
+        fileInteractionObject.instanciateBufferedReader(COURSE_CATALOG_PATH_STRING);
         ArrayList<objCourse> courses = fileInteractionObject.readAllCatalogedCourses();
         for(objCourse c : courses){
             try {
@@ -501,7 +501,63 @@ public class DatabaseAccessObject {
         connection.close();
         return intNextSection;
     }
-    public boolean addSchedule(objFileData fileData, String strClassroom) throws SQLException, ClassNotFoundException {
+    public objClassroom getFreeClassroom(String strStartTime, String strEndTime, String strDays) throws SQLException, ClassNotFoundException {
+        /**
+         * Name : getFreeClassroom
+         * Params : strStartTime - the startTime of the desired time slot
+         *          strEndTime - the end time of the desired slot
+         *          strDays - the days of the desired slot
+         * Returns : strClassroom - a string containing the classroom name of the free classroom if one is found. If
+         *                          none is found this is returned as "-1"
+         * Purpose : The purpose of this function is to search for a free classroom in the desired timeslot on the desired
+         *           days. A SQL query will be used, and if no results are found meeting the start time, end time and
+         *           days requirements we will return "-1"
+         */
+        Connection connection = getConnection();
+        Statement statement = connection.createStatement();
+        String strDaysStatement = getStrDaysStatement(strDays);
+        ArrayList<Integer> lstTakenTUIDS = new ArrayList<>(); //a list to hold the classroom tuids that are unavailable during this time.
+        String strSQL = "SELECT * FROM " + SCHEDULE_TABLE_STRING + " WHERE (Start_Time BETWEEN '" + strStartTime +
+                "' AND '" + strEndTime + "') OR (End_Time BETWEEN '" + strStartTime + "' AND '" + strEndTime + "') AND " +
+                strDaysStatement + " ORDER BY Classroom_TUID ASC";
+        try{
+            ResultSet resultSet = statement.executeQuery(strSQL);
+
+            while(resultSet.next()){
+                System.out.println(resultSet.getInt("Course_TUID"));
+                lstTakenTUIDS.add(resultSet.getInt("Classroom_TUID"));
+            }
+        } catch (Exception ex){
+            ex.printStackTrace();
+            return null;
+        }
+        //get all classrooms in a list
+        ArrayList<objClassroom> lstClassrooms = getAllClassrooms();
+        //see if the list of all classrooms is the same size as our list of taken classrooms for this time
+        if(lstClassrooms.size() == lstTakenTUIDS.size()){
+            return null;
+        }
+        //there is an open classroom, lets iterate through the tuids, which are sorted low to high, and find the classroom
+        //TODO : Ask Dr. James if the nested looping is less efficient than a single loop with a sql query here
+        objClassroom highestCapacityAvailableClassroom = null;
+        for(objClassroom c : lstClassrooms){
+            boolean blnTaken = false;
+            for(int i : lstTakenTUIDS){
+                if(i == c.getIntClassroomTUID()){
+                    blnTaken = true;
+                }
+            }
+            if(!blnTaken){
+                highestCapacityAvailableClassroom = c;
+                break;
+            }
+        }
+        statement.close();
+        connection.close();
+        return highestCapacityAvailableClassroom;
+    }
+    public boolean addSchedule(objFileData fileData, objClassroom classroom) throws SQLException, ClassNotFoundException {
+        //TODO REWORK THIS
         boolean blnAdded = false;
         //get connection and sql statement objects
         Connection connection = getConnection();
@@ -509,7 +565,6 @@ public class DatabaseAccessObject {
         //now we need to get the objects for our professor, classroom, and course to make an entry in our relation table SCHEDULE_tABLE
         objProfessor professor = getProfessor(fileData.getStrProfessorName());
         objCourse course = getCourse(fileData.getStrCourseName());
-        objClassroom classroom = getClassroom("A");
         String strSQL = "INSERT INTO TABLE " + SCHEDULE_TABLE_STRING + " (COURSE_TUID, COURSE_SECTION, CLASSROOM_TUID, PROFESSOR_TUID," +
                 " START_TIME, END_TIME, DAYS) VALUES (" + course.getIntCourseTUID() + ", '" +  "strCourseSection" + "', " +
                 classroom.getIntClassroomTUID() + ", " + professor.getIntProfessorTUID() + ", '" + fileData.getStrStartTime() +
@@ -541,7 +596,7 @@ public class DatabaseAccessObject {
          *           We then return blnAdded signifying either sucess or failure to do so.
          * Notes :
          */
-        boolean blnAdded = false; //the boolean indicating a sucessful entry input.
+        boolean blnAdded = false; //the boolean indicating a successful entry input.
 
         //get connection and sql statement objects
         Connection connection = getConnection();
@@ -573,12 +628,27 @@ public class DatabaseAccessObject {
          */
         String strDaysStatement = "";
         switch (strDays){
+            case "M":
+                strDaysStatement = "DAYS = 'M' OR 'MW'";
+                break;
+            case "T":
+                strDaysStatement = "DAYS = 'T' OR 'TR'";
+                break;
+            case "W":
+                strDaysStatement = "DAYS = 'W' OR 'MW'";
+                break;
+            case "R":
+                strDaysStatement = "DAYS = 'R' OR 'TR'";
+                break;
             case "MW":
                 strDaysStatement = "DAYS = 'M' OR 'W' OR 'MW'";
+                break;
             case "TR":
                 strDaysStatement = "DAYS = 'T' OR 'R' OR 'TR'";
+                break;
             default:
                 strDaysStatement = "DAYS = '" + strDays + "'";
+                break;
         }
         return strDaysStatement;
     }
@@ -629,7 +699,7 @@ public class DatabaseAccessObject {
         try{
             ResultSet resultSet = statement.executeQuery(strSQL);
             while(resultSet.next()){
-                lstClassrooms.add(new objClassroom(resultSet.getString("CLASSROOM_NAME"), resultSet.getInt("CAPACITY")));
+                lstClassrooms.add(new objClassroom(resultSet.getInt("TUID"), resultSet.getString("CLASSROOM_NAME"), resultSet.getInt("CAPACITY")));
             }
         }catch (Exception ex){
             ex.printStackTrace();
