@@ -1,5 +1,6 @@
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -16,13 +17,13 @@ public class TestClass {
     }
     public static boolean DBTest1() throws SQLException, ClassNotFoundException {
         /**
-         * Name : Test1
+         * Name : DBTest 1
          * Returns : boolean - true -> test passed, false -> test failed
          * Purpose : Here we check to see if our database startup will create a new database if none exists
          * Notes :
          */
         //this test is to see if our DatabaseAccessObject.checkDBExists returns false when there is no database
-        System.out.println("Running DBTest1 ...");
+        System.out.println("Running DBTest 1 ...");
         try{
             DAO.startUp();
         } catch (Exception ex){
@@ -33,15 +34,15 @@ public class TestClass {
 
     }
 
-    public static boolean DBTest3() throws SQLException, ClassNotFoundException {
+    public static boolean DBTest2() throws SQLException, ClassNotFoundException {
         /**
-         * Name : Test3
+         * Name : DBTest 2
          * Returns : boolean - true -> test passed, false -> test failed
          * Purpose : the purpose of this method is to see if we can search for objects in our database given good input.
          *           This test also lets us know if our professor, course and classroom tables are being initialized properly
          * Notes : This test does not include anything from the schedule table
          */
-        System.out.println("Running DBTest3 ...");
+        System.out.println("Running DBTest 2 ...");
         objCourse course = DAO.getCourse("CSC 105");
         if(course == null){
             System.out.println("Failed to get Course ");
@@ -68,14 +69,14 @@ public class TestClass {
 
         return true;
     }
-    public static boolean DBTest4() throws SQLException, ClassNotFoundException {
+    public static boolean DBTest3() throws SQLException, ClassNotFoundException {
         /**
-         * Name : Test4
+         * Name : DBTest 3
          * Returns : boolean - true -> test passed, false -> test failed
          * Purpose : the purpose of this method is to test that our method for getting a list with all scheduled courses
          *           works properly.
          */
-        System.out.println("Running DBTest4 ...");
+        System.out.println("Running DBTest 3 ...");
         //first schedule a few more courses
         DAO.addSchedule(1, "02", 1, 1, "10:30", "12:30", "MW");
         DAO.addSchedule(1, "03", 1, 1, "12:30", "02:30", "MW");
@@ -94,14 +95,14 @@ public class TestClass {
 
         return true;
     }
-    public static boolean DBTest5() throws SQLException, ClassNotFoundException {
+    public static boolean DBTest4() throws SQLException, ClassNotFoundException {
         /**
-         * Name : Test5
+         * Name : DB Test 4
          * Returns : boolean - true -> test passed, false -> test failed
          * Purpose : The purpose of this test is to see that our end procedure of asking the user if they want to delete
          *           the database or not executes properly when the Program finishes running.
          */
-        System.out.println("Running DBTest5 ...");
+        System.out.println("Running DBTest 4 ...");
         try {
             DAO.endSession();
             return true;
@@ -110,14 +111,14 @@ public class TestClass {
             return false;
         }
     }
-    public static boolean DBTest6() throws SQLException, ClassNotFoundException {
+    public static boolean DBTest5() throws SQLException, ClassNotFoundException {
         /**
-         * Name : DBTest6
+         * Name : DBTest5
          * Returns : boolean - true -> test passed, false -> test failed
          * Purpose : This test checks to see if our database access object method for finding an available slot
          *           will work when there are no classes scheduled in that spot
          */
-        System.out.println("STARTING DBTEST 6 ...");
+        System.out.println("STARTING DBTest 5 ...");
         objClassroom classroom = DAO.getFreeClassroom("10:00", "11:00", "M");
         if(classroom != null){
             System.out.println("getFreeClassroom method returned " + classroom.getStrClassroomName());
@@ -125,25 +126,53 @@ public class TestClass {
         }
         return false;
     }
-    public static boolean DBTest7() throws SQLException, ClassNotFoundException {
+    public static boolean DBTest6() throws SQLException, ClassNotFoundException {
         /**
-         * Name : DBTest6
+         * Name : DBTest 6
          * Returns : boolean - true -> test passed, false -> test failed
-         * Purpose : This test will check to see if our method for finding a free classroom will grab room B when A
-         *           is taken, C when A and B are taken and return -1 if all 3 are taken
+         * Purpose : This test makes sure we can add to our schedule table
          */
-        System.out.println("STARTING DBTEST 7 ...");
-        DAO.addSchedule(1, "1", 1, 1, "8:30", "10:30", "M");
-        objClassroom classroom = DAO.getFreeClassroom("8:30", "10:30", "M");
-        System.out.println(classroom.getIntClassroomTUID() + " " + classroom.getStrClassroomName());
-        if(classroom.intClassroomTUID != 2){
-            return false;
-        }
-        DAO.addSchedule(1, "1", 2, 1, "8:30", "10:30", "M");
-        classroom = DAO.getFreeClassroom("8:30", "10:30", "TR");
+        DAO.addSchedule(1,"05", 1, 1, "8:30", "10:30","TR");
+        DAO.addSchedule(1, "06",2, 3, "8:30", "12:30", "R");
+        DAO.addSchedule(1,"07", 3, 2, "10:00", "2:00", "T");
         return true;
     }
-    public static void runDBTests() throws SQLException, ClassNotFoundException {
+    public static boolean DBTest7() throws SQLException, ClassNotFoundException, IOException {
+        /**
+         * Name : DBTest7
+         * Returns : boolean - true -> test passed, false -> test failed
+         * Purpose : The purpose of this class is to see that we can get all scheduled classes
+         */
+        System.out.println("STARTING DBTEST 7 ...");
+        HashMap<String, ArrayList<objSchedule>> mapSchedule;
+        mapSchedule = DAO.getAllScheduled();
+        for(Map.Entry<String, ArrayList<objSchedule>> e : mapSchedule.entrySet()){
+            System.out.println("All classes on " + e.getKey() + " ---");
+            for(objSchedule s : e.getValue()){
+                System.out.println(s.getIntTUID() + " " + s.getStrDays() + " " + s.getStrStartTime() + " " + s.getStrEndTime());
+            }
+        }
+        return true;
+    }
+    public static boolean DBTest8() throws SQLException, ClassNotFoundException {
+        /**
+         * Name : DBTest8
+         * Returns : boolean - true -> test passed, false -> test failed
+         * Purpose :
+         */
+        System.out.println("Starting DB Test 8");
+        String strDaysCheck = "TR";
+        HashMap<String, ArrayList<objSchedule>> mapSchedule = DAO.getAllScheduled();
+        for (Map.Entry<String, ArrayList<objSchedule>> e : mapSchedule.entrySet()){
+            if(strDaysCheck.contains(e.getKey())){
+                for(objSchedule s : e.getValue()){
+                    System.out.println(s.getIntTUID() + " " + s.getStrStartTime() + " " + s.getStrEndTime() + " " + s.getStrDays());
+                }
+            }
+        }
+        return true;
+    }
+    public static void runDBTests() throws SQLException, ClassNotFoundException, IOException {
         /**
          * Name : runDBTests
          * Returns : none.
@@ -151,12 +180,13 @@ public class TestClass {
          */
         System.out.println("BEGIN DATABASE TESTS .....");
         System.out.println("DBTest1 : " + DBTest1());
-        //dbtest2 deleted
+        System.out.println("DBTest2 : " + DBTest2());
         System.out.println("DBTest3 : " + DBTest3());
         System.out.println("DBTest4 : " + DBTest4() + " Disregard false if 1 input on DBTest1.");
         System.out.println("DBTest5 : " + DBTest5());
         System.out.println("DBTest6 : " + DBTest6());
         System.out.println("DBTest7 : " + DBTest7());
+        System.out.println("DBTest8 : " + DBTest8());
         System.out.println("END DATABASE TESTS .....");
     }
     public static boolean FileTest1() throws IOException {

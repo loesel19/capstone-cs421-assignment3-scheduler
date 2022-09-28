@@ -6,6 +6,7 @@ import java.lang.constant.Constable;
 import java.sql.*;
 import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Scanner;
 import java.util.regex.Matcher;
@@ -896,5 +897,70 @@ public class DatabaseAccessObject {
         statement.close();
         connection.close();
         return professor;
+    }
+    public HashMap<String, ArrayList<objSchedule>> getAllScheduled() throws SQLException, ClassNotFoundException {
+        /**
+         * Name : getAllScheduled
+         * Params : strDays
+         * Returns : mapSchedule - a hashMap where keys are days and values are an arraylist of all scheduled courses on that day.
+         * Purpose : The purpose of this method is to get a hashmap with all scheduled classes on each day
+         */
+        HashMap<String, ArrayList<objSchedule>> mapSchedule = new HashMap<>(); // our container
+        //get connection and statement objects
+        Connection connection = getConnection();
+        Statement statement = connection.createStatement();
+        ResultSet resultSet = null; //the resultset of our sql queries
+        //first lets get all classes on monday
+        String strDay = "M";
+        String strSQL;
+        ArrayList<objSchedule> lstSchedule;
+        try{
+            while(!strDay.equals("-1")){
+                strSQL = "SELECT * FROM " + SCHEDULE_TABLE_STRING + " WHERE Days LIKE \"%"+ strDay + "%\";";
+                lstSchedule = new ArrayList<>();
+                resultSet = statement.executeQuery(strSQL);
+                while(resultSet.next()){
+                    objSchedule schedule = new objSchedule(resultSet.getInt("TUID"), resultSet.getInt("Course_TUID"),
+                            resultSet.getString("Course_Section"), resultSet.getInt("Classroom_TUID"),
+                            resultSet.getInt("Professor_TUID"), resultSet.getString("Start_Time"),
+                            resultSet.getString("End_Time"), strDay);
+                    lstSchedule.add(schedule);
+                }
+                //now we add an entry to our hashmap
+                mapSchedule.put(strDay, lstSchedule);
+                strDay = changeDay(strDay);
+            }
+        } catch(Exception ex){
+            ex.printStackTrace();
+        }
+        return mapSchedule;
+    }
+    private String changeDay(String strDay){
+        switch (strDay){
+            case "M":
+                return "T";
+            case "T":
+                return "W";
+            case "W":
+                return "R";
+            case "R":
+                return "F";
+            default:
+                return "-1";
+        }
+    }
+    public ResultSet queryDB(String strSQL) throws SQLException, ClassNotFoundException {
+        Connection connection = getConnection();
+        Statement statement = connection.createStatement();
+        ResultSet resultSet = null;
+        try {
+            resultSet = statement.executeQuery(strSQL);
+        } catch (Exception ex){
+            ex.printStackTrace();
+        }
+        statement.close();
+        connection.close();
+        return resultSet;
+
     }
 }
