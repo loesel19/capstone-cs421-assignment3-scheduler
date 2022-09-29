@@ -9,6 +9,7 @@ import java.util.regex.Pattern;
 public class TestClass {
     private static DatabaseAccessObject DAO = new DatabaseAccessObject();
     private static final String testFilePath = "testFile1.txt";
+    private static final String SCHEDULE_FILE_PATH = "Schedule_Slot_Catalog.txt";
     public static void main(String args[]) throws SQLException, ClassNotFoundException, IOException {
 
         runDBTests();
@@ -134,7 +135,7 @@ public class TestClass {
          */
         DAO.addSchedule(1,"05", 1, 1, "8:30", "10:30","TR");
         DAO.addSchedule(1, "06",2, 3, "8:30", "12:30", "R");
-        DAO.addSchedule(1,"07", 3, 2, "10:00", "2:00", "T");
+        //DAO.addSchedule(1,"07", 3, 2, "10:00", "2:00", "T");
         return true;
     }
     public static boolean DBTest7() throws SQLException, ClassNotFoundException, IOException {
@@ -154,7 +155,7 @@ public class TestClass {
         }
         return true;
     }
-    public static boolean DBTest8() throws SQLException, ClassNotFoundException {
+    public static boolean DBTest8() throws SQLException, ClassNotFoundException, IOException {
         /**
          * Name : DBTest8
          * Returns : boolean - true -> test passed, false -> test failed
@@ -162,15 +163,75 @@ public class TestClass {
          */
         System.out.println("Starting DB Test 8");
         String strDaysCheck = "TR";
+        String strStartTime = "10:30";
+        String strEndTime = "12:30";
+        FileInteractionObject fileInteractionObject = new FileInteractionObject();
+        fileInteractionObject.instanciateBufferedReader(SCHEDULE_FILE_PATH);
+        HashMap<String, ArrayList<String>> mapTimes = fileInteractionObject.getTimes();
         HashMap<String, ArrayList<objSchedule>> mapSchedule = DAO.getAllScheduled();
-        for (Map.Entry<String, ArrayList<objSchedule>> e : mapSchedule.entrySet()){
-            if(strDaysCheck.contains(e.getKey())){
-                for(objSchedule s : e.getValue()){
-                    System.out.println(s.getIntTUID() + " " + s.getStrStartTime() + " " + s.getStrEndTime() + " " + s.getStrDays());
+        String strSeperateDays[] = getDaysSeperate(strDaysCheck);
+        ArrayList<Integer> lstScheduledTUIDS = null;
+        int intStartIndex = 0;
+        int intEndIndex = 0;
+
+        for(int i = 0; i < strSeperateDays.length; i++){
+            ArrayList<String> lstTemp = mapTimes.get(strSeperateDays[i]);
+            //lstTemp is every possible time slot on the given day
+            //loop through until s = our start time, then from our start time to end time check mapSchedule on the days
+            //to see how many classes are in the time period
+            for (String s : lstTemp){
+                if(s.equals(strStartTime)){
+                    intStartIndex = lstTemp.indexOf(s);
+                }
+                if(s.equals(strEndTime)){
+                    intEndIndex = lstTemp.indexOf(s);
                 }
             }
+            //now that we have the index of the start and end times lets loop through and try to find scheduled classes
+            ArrayList<objSchedule> lstSchedule = mapSchedule.get(strSeperateDays[i]);
+            ArrayList<String> lstTimes = mapTimes.get(strSeperateDays[i]);
+            lstScheduledTUIDS = new ArrayList<>(); //a list of the tuids for classes we have already marked in a given time slot
+            for(int j = intStartIndex; j <= intEndIndex; j++){
+                String strCurrTime = lstTimes.get(j);
+
+
+                for(objSchedule schedule : lstSchedule){
+
+                    if(schedule.getStrStartTime().equals(strCurrTime)){
+                        if(!lstScheduledTUIDS.contains(schedule.getIntTUID())) {
+                            System.out.println("Added " + schedule.getIntTUID() + " on " + strSeperateDays[i]);
+
+                            lstScheduledTUIDS.add(schedule.getIntTUID());
+                        }else{
+                            System.out.println("** caught extra");
+                        }
+                    }
+                    if(schedule.getStrEndTime().equals(strCurrTime)){
+                        if(!lstScheduledTUIDS.contains(schedule.getIntTUID())) {
+                            System.out.println("Added " + schedule.getIntTUID() + " on " + strSeperateDays[i]);
+
+                            lstScheduledTUIDS.add(schedule.getIntTUID());
+                        }else{
+                            System.out.println("** caught extra");
+                        }
+                    }
+                }
+
+            }
         }
+        System.out.println("On "+ strDaysCheck + " " + strStartTime + "-" + strEndTime + " There are " + lstScheduledTUIDS.size() + " already scheduled");
+
         return true;
+    }
+    public static String[] getDaysSeperate(String strDays){
+        switch (strDays){
+            case "MW":
+                return new String[]{"M", "W"};
+            case "TR":
+                return new String[]{"T", "R"};
+            default:
+                return new String[]{strDays};
+        }
     }
     public static void runDBTests() throws SQLException, ClassNotFoundException, IOException {
         /**

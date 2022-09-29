@@ -152,22 +152,26 @@ public class FileInteractionObject {
     }
     public HashMap<String, ArrayList<String>> getTimes() throws IOException {
         /**
-         *
+         * Name : getTimes
+         * Params : none
+         * Returns : mapTimes - a Hashmap where keys are single weekdays and values are an arraylist of possible time a class can ocurr on that day
+         * Purpose : the purpose of this method is to read in a file containing each possible start and end time on a given day and
+         *           then return a hashmap with the days as keys and all times as a value.
          */
         HashMap<String, ArrayList<String>> mapTimes = new HashMap<>();
         String line;
         String key = "";
         ArrayList<String> lstTemp = new ArrayList<>();
         if((line = bufferedReader.readLine()) != null) {
-            key = line.split(" ")[0] + line.split(" ")[1];
+            key = line;
         }
         while((line = bufferedReader.readLine()) != null){
-            if(line.split(" ").length > 1){
+            if(line.split(":").length != 2){
                 //now we are on to a new day/hours section
                 //add old one to hashmap
                 mapTimes.put(key, lstTemp);
                 lstTemp = new ArrayList<>();
-                key = line.split(" ")[0] + line.split(" ")[1];
+                key = line;
                 continue;
             }
             lstTemp.add(line);
