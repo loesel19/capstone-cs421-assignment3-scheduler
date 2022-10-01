@@ -524,7 +524,7 @@ public class TestClass {
          */
 
 
-        return false;+
+        return false;
     }
     public static void runScheduleTests() throws SQLException, ClassNotFoundException {
         /**
