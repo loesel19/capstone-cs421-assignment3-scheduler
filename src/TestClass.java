@@ -515,6 +515,17 @@ public class TestClass {
         LocalTime time = LocalTime.of(Integer.parseInt(strTime.split(":")[0]), Integer.parseInt(strTime.split(":")[1]));
         return time;
     }
+    public boolean ScheduleTest3(){
+        /**
+         * Name : ScheduleTest3
+         * Returns : boolean, true -> test passed, false -> test failed
+         * Purpose : The Purpose of this test is to see if we can take in a file that will max out all time slots for 4
+         *           credit courses, and try to schedule them all.
+         */
+
+
+        return false;+
+    }
     public static void runScheduleTests() throws SQLException, ClassNotFoundException {
         /**
          * Name : runScheduleTests

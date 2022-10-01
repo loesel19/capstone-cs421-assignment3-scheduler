@@ -557,7 +557,7 @@ public class DatabaseAccessObject {
         connection.close();
         return highestCapacityAvailableClassroom;
     }
-    public boolean addSchedule(objFileData fileData, objClassroom classroom) throws SQLException, ClassNotFoundException {
+    public boolean addSchedule(objFileData fileData, int intClassroomTUID, int intNewSection) throws SQLException, ClassNotFoundException {
         //TODO REWORK THIS
         boolean blnAdded = false;
         //get connection and sql statement objects
@@ -567,8 +567,8 @@ public class DatabaseAccessObject {
         objProfessor professor = getProfessor(fileData.getStrProfessorName());
         objCourse course = getCourse(fileData.getStrCourseName());
         String strSQL = "INSERT INTO TABLE " + SCHEDULE_TABLE_STRING + " (COURSE_TUID, COURSE_SECTION, CLASSROOM_TUID, PROFESSOR_TUID," +
-                " START_TIME, END_TIME, DAYS) VALUES (" + course.getIntCourseTUID() + ", '" +  "strCourseSection" + "', " +
-                classroom.getIntClassroomTUID() + ", " + professor.getIntProfessorTUID() + ", '" + fileData.getStrStartTime() +
+                " START_TIME, END_TIME, DAYS) VALUES (" + course.getIntCourseTUID() + ", '" +  intNewSection + "', " +
+                intClassroomTUID + ", " + professor.getIntProfessorTUID() + ", '" + fileData.getStrStartTime() +
                 "', '" + fileData.getStrEndTime() + "', '" + fileData.getStrDays() + "';";
         try{
             blnAdded = statement.execute(strSQL);
