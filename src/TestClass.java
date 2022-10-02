@@ -515,18 +515,30 @@ public class TestClass {
         LocalTime time = LocalTime.of(Integer.parseInt(strTime.split(":")[0]), Integer.parseInt(strTime.split(":")[1]));
         return time;
     }
-    public boolean ScheduleTest3(){
+    public static boolean ScheduleTest3() throws SQLException, ClassNotFoundException, IOException {
         /**
          * Name : ScheduleTest3
          * Returns : boolean, true -> test passed, false -> test failed
          * Purpose : The Purpose of this test is to see if we can take in a file that will max out all time slots for 4
          *           credit courses, and try to schedule them all.
          */
+        System.out.println("STARTING SCHEDULE TEST 3 ...");
+        DAO.endSession();
+        DAO.startUp();
 
-
-        return false;
+        FileInteractionObject fileInteractionObject = new FileInteractionObject();
+        fileInteractionObject.instanciateBufferedReader("Test_Fill_Schedule_4_Cred.txt");
+        SchedulerObject scheduler = new SchedulerObject(DAO, fileInteractionObject);
+        scheduler.scheduleAll(fileInteractionObject.readAllFileLine());
+        HashMap<String, ArrayList<objSchedule>> mapAllScheduled = DAO.getAllScheduled();
+        for(Map.Entry<String, ArrayList<objSchedule>> e : mapAllScheduled.entrySet()){
+            for(objSchedule s : e.getValue()){
+                System.out.println(s.toString());
+            }
+        }
+        return true;
     }
-    public static void runScheduleTests() throws SQLException, ClassNotFoundException {
+    public static void runScheduleTests() throws SQLException, ClassNotFoundException, IOException {
         /**
          * Name : runScheduleTests
          * Params : None
@@ -534,7 +546,8 @@ public class TestClass {
          */
         System.out.println("STARTING SCHEDULE TESTS .....");
         System.out.println("SCHEDULE TEST 1 : " + ScheduleTest1());
-        System.out.println("SCHEDLUE TEST 2 : " + ScheduleTest2());
+        System.out.println("SCHEDULE TEST 2 : " + ScheduleTest2());
+        System.out.println("SCHEDULE TEST 3 : " + ScheduleTest3());
         System.out.println("END SCHEDULE TESTS .....");
     }
 }

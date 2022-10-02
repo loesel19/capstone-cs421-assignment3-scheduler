@@ -671,7 +671,7 @@ public class DatabaseAccessObject {
             ResultSet resultSet = statement.executeQuery(strSQL);
             while(resultSet.next()){
                 objSchedule schedule = new objSchedule(resultSet.getInt("TUID"), resultSet.getInt("COURSE_TUID"),
-                        resultSet.getString("COURSE_SECTION"), resultSet.getInt("CLASSROOM_TUID"),
+                        resultSet.getInt("COURSE_SECTION"), resultSet.getInt("CLASSROOM_TUID"),
                         resultSet.getInt("PROFESSOR_TUID"), resultSet.getString("START_TIME"), resultSet.getString("END_TIME"),
                         resultSet.getString("DAYS"));
                 lstSchedule.add(schedule);
@@ -762,7 +762,7 @@ public class DatabaseAccessObject {
 
             while(resultSet.next()){
                 objSchedule temp = new objSchedule(resultSet.getInt("TUID"), resultSet.getInt("COURSE_TUID"),
-                        resultSet.getString("COURSE_SECTION"), resultSet.getInt("CLASSROOM_TUID"),
+                        resultSet.getInt("COURSE_SECTION"), resultSet.getInt("CLASSROOM_TUID"),
                         resultSet.getInt("PROFESSOR_TUID"), resultSet.getString("START_TIME"), resultSet.getString("END_TIME"),
                         resultSet.getString("DAYS"));
                 lstScheduled.add(temp);
@@ -921,7 +921,7 @@ public class DatabaseAccessObject {
                 resultSet = statement.executeQuery(strSQL);
                 while(resultSet.next()){
                     objSchedule schedule = new objSchedule(resultSet.getInt("TUID"), resultSet.getInt("Course_TUID"),
-                            resultSet.getString("Course_Section"), resultSet.getInt("Classroom_TUID"),
+                            resultSet.getInt("Course_Section"), resultSet.getInt("Classroom_TUID"),
                             resultSet.getInt("Professor_TUID"), resultSet.getString("Start_Time"),
                             resultSet.getString("End_Time"), strDay);
                     lstSchedule.add(schedule);
