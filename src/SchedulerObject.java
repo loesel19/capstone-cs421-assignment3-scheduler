@@ -370,7 +370,7 @@ public class SchedulerObject {
         fileData.setStrDays("F");
         newStartTime = FIRST_SCHEDULE_TIME_F;
         newEndTime = newStartTime.plus((2 * lngBlockTimeHours), ChronoUnit.HOURS);
-        while(newEndTime.isBefore(LAST_SCHEDULE_TIME_F)){
+        while(newEndTime.isBefore(LAST_SCHEDULE_TIME_F) || newEndTime.equals(LAST_SCHEDULE_TIME_F)){
             lstScheduledTUIDS = getScheduledCoursesInTime(fileData.getStrDays(), newStartTime, newEndTime);
             fileData.setStrStartTime(newStartTime.toString());
             fileData.setStrEndTime(newEndTime.toString());
