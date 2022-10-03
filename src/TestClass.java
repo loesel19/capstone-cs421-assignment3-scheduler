@@ -546,7 +546,7 @@ public class TestClass {
          */
         System.out.println("STARTING SCHEDULE TESTS .....");
         System.out.println("SCHEDULE TEST 1 : " + ScheduleTest1());
-        System.out.println("SCHEDULE TEST 2 : " + ScheduleTest2());
+        //System.out.println("SCHEDULE TEST 2 : " + ScheduleTest2());
         System.out.println("SCHEDULE TEST 3 : " + ScheduleTest3());
         System.out.println("END SCHEDULE TESTS .....");
     }

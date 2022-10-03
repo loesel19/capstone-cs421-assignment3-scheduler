@@ -30,9 +30,9 @@ public class SchedulerObject {
     private static final String One_Credit_Hour_Start_Time_Pattern = "([0-1]?[0-3]|9):00"; //the regex pattern used to schedule 1 credit hour classes.
     private static final String SCHEDULE_TABLE_STRING = "Schedule_Table"; //the name of our schedule table in the database
     private static final LocalTime FIRST_SCHEDULE_TIME_MR = LocalTime.of(8, 30); //the first time a course can start at on Monday through Thursday
-    private static final LocalTime LAST_SCHEDULE_TIME_MR = LocalTime.of(4, 30); //the last time a course can go until on Monday through Thursday
+    private static final LocalTime LAST_SCHEDULE_TIME_MR = LocalTime.of(16, 30); //the last time a course can go until on Monday through Thursday
     private static final LocalTime FIRST_SCHEDULE_TIME_F = LocalTime.of(8, 30); //the first time a course can be scheduled on friday
-    private static final LocalTime LAST_SCHEDULE_TIME_F = LocalTime.of(4,30); //the last time a course can be scheduled on friday
+    private static final LocalTime LAST_SCHEDULE_TIME_F = LocalTime.of(16,30); //the last time a course can be scheduled on friday
 
 
 
@@ -130,6 +130,10 @@ public class SchedulerObject {
         String strDaysSeparate[] = getDaysSeparate(strDays);
         for(int i = 0; i < strDaysSeparate.length; i++){
             ArrayList<objSchedule> lstScheduledClassesOnDay = mapScheduled.get(strDaysSeparate[i]);
+            //check if lstScheduledClassesOnDay is null, if so just return a new arrayList
+            if(lstScheduledClassesOnDay == null){
+                return new ArrayList<>();
+            }
             for(objSchedule s : lstScheduledClassesOnDay){
                 LocalTime timeScheduledStart = getTimeFromString(s.getStrStartTime());
                 LocalTime timeScheduledEnd = getTimeFromString(s.getStrEndTime());
@@ -253,12 +257,8 @@ public class SchedulerObject {
          */
         int intNewSection = 1; //the next available section.
         objCourse thisCourse = databaseAccessObject.getCourse(fileData.getStrCourseName());
-        String strSQL = "SELECT TOP 1 Course_Section from " + SCHEDULE_TABLE_STRING + " WHERE courseTUID = " +
-                thisCourse.getIntCourseTUID() + " ORDER BY Course_Section DESC;";
-        ResultSet resultSet = databaseAccessObject.queryDB(strSQL);
-        if(resultSet.next()){
-            intNewSection = resultSet.getInt("Course_Section");
-        }
+        intNewSection = databaseAccessObject.getNewCourseSection(thisCourse.getIntCourseTUID());
+
         //if we could not read the next line of the result set that means there are no courses scheduled, and we should schedule this course as section 1.
         return intNewSection;
     }
@@ -316,10 +316,12 @@ public class SchedulerObject {
            last available class time */
         while(newEndTime.isBefore(LAST_SCHEDULE_TIME_MR)){
             lstScheduledTUIDS = getScheduledCoursesInTime(fileData.getStrDays(), newStartTime, newEndTime);
+            fileData.setStrStartTime(newStartTime.toString());
+            fileData.setStrEndTime(newEndTime.toString());
             if(trySchedule(fileData, lstScheduledTUIDS, intNewCourseSection))
                 return;
-            newStartTime.plus(lngBlockTimeHours, ChronoUnit.HOURS);
-            newEndTime.plus(lngBlockTimeHours, ChronoUnit.HOURS);
+            newStartTime = newStartTime.plus(lngBlockTimeHours, ChronoUnit.HOURS);
+            newEndTime = newEndTime.plus(lngBlockTimeHours, ChronoUnit.HOURS);
         }
 
         //part four : try all other times after and then before original times on adjacent days
@@ -329,20 +331,24 @@ public class SchedulerObject {
         newEndTime = timeOriginalEnd.plus(lngBlockTimeHours, ChronoUnit.HOURS);
         while(newEndTime.isBefore(LAST_SCHEDULE_TIME_MR)){
             lstScheduledTUIDS = getScheduledCoursesInTime(fileData.getStrDays(), newStartTime, newEndTime);
+            fileData.setStrStartTime(newStartTime.toString());
+            fileData.setStrEndTime(newEndTime.toString());
             if(trySchedule(fileData, lstScheduledTUIDS, intNewCourseSection))
                 return;
-            newStartTime.plus(lngBlockTimeHours, ChronoUnit.HOURS);
-            newEndTime.plus(lngBlockTimeHours, ChronoUnit.HOURS);
+            newStartTime = newStartTime.plus(lngBlockTimeHours, ChronoUnit.HOURS);
+            newEndTime = newEndTime.plus(lngBlockTimeHours, ChronoUnit.HOURS);
         }
         //now try before
         newStartTime = FIRST_SCHEDULE_TIME_MR.plus(lngBlockTimeHours, ChronoUnit.HOURS);
         newEndTime = FIRST_SCHEDULE_TIME_MR.plus(lngBlockTimeHours, ChronoUnit.HOURS);
         while(newEndTime.isBefore(timeOriginalStart)){
             lstScheduledTUIDS = getScheduledCoursesInTime(fileData.getStrDays(), newStartTime, newEndTime);
+            fileData.setStrStartTime(newStartTime.toString());
+            fileData.setStrEndTime(newEndTime.toString());
             if(trySchedule(fileData, lstScheduledTUIDS, intNewCourseSection))
                 return;
-            newStartTime.plus(lngBlockTimeHours, ChronoUnit.HOURS);
-            newEndTime.plus(lngBlockTimeHours, ChronoUnit.HOURS);
+            newStartTime = newStartTime.plus(lngBlockTimeHours, ChronoUnit.HOURS);
+            newEndTime = newEndTime.plus(lngBlockTimeHours, ChronoUnit.HOURS);
         }
 
         //part five : try all times before the original times on the original days
@@ -351,10 +357,12 @@ public class SchedulerObject {
         newEndTime = FIRST_SCHEDULE_TIME_MR.plus(lngBlockTimeHours, ChronoUnit.HOURS);
         while(newEndTime.isBefore(timeOriginalStart)){
             lstScheduledTUIDS = getScheduledCoursesInTime(fileData.getStrDays(), newStartTime, newEndTime);
+            fileData.setStrStartTime(newStartTime.toString());
+            fileData.setStrEndTime(newEndTime.toString());
             if(trySchedule(fileData, lstScheduledTUIDS, intNewCourseSection))
                 return;
-            newStartTime.plus(lngBlockTimeHours, ChronoUnit.HOURS);
-            newEndTime.plus(lngBlockTimeHours, ChronoUnit.HOURS);
+            newStartTime = newStartTime.plus(lngBlockTimeHours, ChronoUnit.HOURS);
+            newEndTime = newEndTime.plus(lngBlockTimeHours, ChronoUnit.HOURS);
         }
 
         //part six : try fridays
@@ -364,13 +372,18 @@ public class SchedulerObject {
         newEndTime = newStartTime.plus((2 * lngBlockTimeHours), ChronoUnit.HOURS);
         while(newEndTime.isBefore(LAST_SCHEDULE_TIME_F)){
             lstScheduledTUIDS = getScheduledCoursesInTime(fileData.getStrDays(), newStartTime, newEndTime);
+            fileData.setStrStartTime(newStartTime.toString());
+            fileData.setStrEndTime(newEndTime.toString());
             if(trySchedule(fileData, lstScheduledTUIDS, intNewCourseSection))
                 return;
-            newStartTime.plus((2 *lngBlockTimeHours), ChronoUnit.HOURS);
-            newEndTime.plus((2 * lngBlockTimeHours), ChronoUnit.HOURS);
+            newStartTime = newStartTime.plus((2 *lngBlockTimeHours), ChronoUnit.HOURS);
+            newEndTime = newEndTime.plus((2 * lngBlockTimeHours), ChronoUnit.HOURS);
         }
 
         //we could not schedule the course, so we need to print out that it was not scheduled
+        fileData.setStrDays(strOriginalDays);
+        fileData.setStrStartTime(timeOriginalStart.toString());
+        fileData.setStrEndTime(timeOriginalEnd.toString());
         System.out.println("Could not schedule section " + intNewCourseSection + " for " + fileData.toString());
     }
     private boolean scheduleThreeCredit(objFileData fileData) {

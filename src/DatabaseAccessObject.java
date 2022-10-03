@@ -566,10 +566,10 @@ public class DatabaseAccessObject {
         //now we need to get the objects for our professor, classroom, and course to make an entry in our relation table SCHEDULE_tABLE
         objProfessor professor = getProfessor(fileData.getStrProfessorName());
         objCourse course = getCourse(fileData.getStrCourseName());
-        String strSQL = "INSERT INTO TABLE " + SCHEDULE_TABLE_STRING + " (COURSE_TUID, COURSE_SECTION, CLASSROOM_TUID, PROFESSOR_TUID," +
-                " START_TIME, END_TIME, DAYS) VALUES (" + course.getIntCourseTUID() + ", '" +  intNewSection + "', " +
+        String strSQL = "INSERT INTO " + SCHEDULE_TABLE_STRING + " (COURSE_TUID, COURSE_SECTION, CLASSROOM_TUID, PROFESSOR_TUID," +
+                " START_TIME, END_TIME, DAYS) VALUES (" + course.getIntCourseTUID() + ", " +  intNewSection + ", " +
                 intClassroomTUID + ", " + professor.getIntProfessorTUID() + ", '" + fileData.getStrStartTime() +
-                "', '" + fileData.getStrEndTime() + "', '" + fileData.getStrDays() + "';";
+                "', '" + fileData.getStrEndTime() + "', '" + fileData.getStrDays() + "');";
         try{
             blnAdded = statement.execute(strSQL);
         }catch (Exception ex){
@@ -962,5 +962,28 @@ public class DatabaseAccessObject {
         connection.close();
         return resultSet;
 
+    }
+    public int getNewCourseSection(int Course_TUID) throws SQLException, ClassNotFoundException {
+        /**
+         * Name : getNewCourseSection
+         * Params : Course_TUID - the tuid for the course we want to get a new section for
+         * Returns :
+         * Purpose :
+         */
+        Connection connection = getConnection();
+        Statement statement = connection.createStatement();
+        int intNewSection = 0;
+        String strSQL = "SELECT MAX(Course_Section) FROM " + SCHEDULE_TABLE_STRING + " WHERE Course_TUID = " + Course_TUID + ";";
+        try {
+            ResultSet resultSet = statement.executeQuery(strSQL);
+            if(!resultSet.next())
+                intNewSection = 1;
+            intNewSection = resultSet.getInt(1) + 1;
+        }catch (Exception ex){
+            intNewSection = -1;
+        }
+        statement.close();
+        connection.close();
+        return intNewSection;
     }
 }
