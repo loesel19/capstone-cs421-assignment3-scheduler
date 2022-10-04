@@ -106,7 +106,12 @@ public class SchedulerObject {
          * Purpose : The purpose of this method is to represent a string that supposed to be a time as a LocalTime object
          *           and return that object.
          */
-        LocalTime time = LocalTime.of(Integer.parseInt(strTime.split(":")[0]), Integer.parseInt(strTime.split(":")[1]));
+        LocalTime time;
+        if(Integer.parseInt(strTime.split(":")[0]) < 8){
+            time = LocalTime.of(12 + Integer.parseInt(strTime.split(":")[0]), Integer.parseInt(strTime.split(":")[1]));
+        }else {
+            time = LocalTime.of(Integer.parseInt(strTime.split(":")[0]), Integer.parseInt(strTime.split(":")[1]));
+        }
         return time;
     }
     private ArrayList<Integer> getScheduledCoursesInTime(String strDays, LocalTime timeStart, LocalTime timeEnd) throws SQLException, ClassNotFoundException {
@@ -137,47 +142,24 @@ public class SchedulerObject {
             for(objSchedule s : lstScheduledClassesOnDay){
                 LocalTime timeScheduledStart = getTimeFromString(s.getStrStartTime());
                 LocalTime timeScheduledEnd = getTimeFromString(s.getStrEndTime());
-                //first check if timeStart is after timeCurrentStart, and before timeCurrentEnd
-                //TODO : ask if doing an || in the if statement is more readable here. (or shortens our method)
-                if(timeStart.isAfter(timeScheduledStart) && timeStart.isBefore(timeScheduledEnd)){
-                    //WE NEED TO COUNT THIS AS A CLASS IN OUR SLOT
+                /* here we need to consider a few conflict conditions. 1: if the start time or end times of a course are
+                   equal we know that the scheduled course and the course we are scheduling overlap. 2: If the course we are
+                   trying to schedule starts after the scheduled course start time and before the scheduled course end time
+                   there is an overlap. 3: If the new course ends after the scheduled course start time and before its end
+                   time there is an overlap. 4: If the scheduled course starts after the new courses start time and before
+                   its end time there is an overlap. 5: If the scheduled course ends after the new courses start time and before
+                   its end time there is an overlap. */
+                if(timeStart.equals(timeScheduledStart) || timeEnd.equals(timeScheduledEnd) || (timeStart.isAfter(timeScheduledStart) &&
+                        timeStart.isBefore(timeScheduledEnd)) || (timeEnd.isAfter(timeScheduledStart) && timeEnd.isBefore(timeScheduledEnd))
+                || (timeScheduledStart.isAfter(timeStart) && timeScheduledStart.isBefore(timeStart)) || (timeScheduledStart.isAfter(timeEnd)
+                        && timeScheduledEnd.isBefore(timeEnd))){
+                    //Before we count this as an overlap we need to make sure it has not already been accounted for.
                     if(!lstAccountedForTUIDS.contains(s.getIntTUID())){
                         lstAccountedForTUIDS.add(s.getIntTUID());
                     }
                     continue;
                 }
-                //next see if start time or end times are equal
-                if(timeScheduledStart.equals(timeStart) || timeScheduledEnd.equals(timeEnd)){
-                    //WE NEED TO COUNT THIS AS A CLASS IN OUR SLOT
-                    if(!lstAccountedForTUIDS.contains(s.getIntTUID())){
-                        lstAccountedForTUIDS.add(s.getIntTUID());
-                    }
-                    continue;
-                }
-                //next see if timeEnd is between start and end time
-                if(timeEnd.isAfter(timeScheduledEnd) && timeEnd.isBefore(timeScheduledEnd)){
-                    //NEED TO COUNT IN OUR SLOT
-                    if(!lstAccountedForTUIDS.contains(s.getIntTUID())){
-                        lstAccountedForTUIDS.add(s.getIntTUID());
-                    }
-                    continue;
-                }
-                //next case we need to account for is if the class we try to schedule starts before a scheduled course and ends after a scheduled course
-                if(timeScheduledStart.isAfter(timeStart) && timeScheduledStart.isBefore(timeEnd)){
-                    //the current class that we are looking at starts after the class we are looking to add, but its start time is within the new classes endtime
-                    if(!lstAccountedForTUIDS.contains(s.getIntTUID())){
-                        lstAccountedForTUIDS.add(s.getIntTUID());
-                    }
-                    continue;
-                }
-                //lastly we nned to check if a scheduled course starts before and ends after our desired times
-                if(timeScheduledEnd.isAfter(timeStart) && timeScheduledEnd.isBefore(timeEnd)){
-                    //the class we are trying to scheduled starts before an already scheduled class ends.
-                    if(!lstAccountedForTUIDS.contains(s.getIntTUID())){
-                        lstAccountedForTUIDS.add(s.getIntTUID());
-                    }
-                    continue;
-                }
+
 
             }
         }
@@ -282,7 +264,7 @@ public class SchedulerObject {
         }
         return false;
     }
-    private void scheduleFourCredit(objFileData fileData) throws SQLException, ClassNotFoundException {
+    private void scheduleFourOrThreeCredit(objFileData fileData) throws SQLException, ClassNotFoundException {
         /**
          * Name : scheduleFourCredit
          * Params : fileData - an object containing the data for the course we want to schedule from our input file
@@ -293,7 +275,8 @@ public class SchedulerObject {
         LocalTime timeOriginalStart = getTimeFromString(fileData.getStrStartTime());
         LocalTime timeOriginalEnd = getTimeFromString(fileData.getStrEndTime());
         String strOriginalDays = fileData.getStrDays();
-        long lngBlockTimeHours = 2; //the hours we need for our 2 day class periods //TODO get this from intCreditHours
+        objCourse course = databaseAccessObject.getCourse(fileData.getStrCourseName());
+        long lngBlockTimeHours = course.getIntCreditHours(); //the hours we need for our 2 day class periods //TODO get this from intCreditHours
         //part one : try to schedule on desired days/ times
 
         ArrayList lstScheduledTUIDS = getScheduledCoursesInTime(strOriginalDays, timeOriginalStart, timeOriginalEnd);
@@ -310,74 +293,74 @@ public class SchedulerObject {
         //part three : switch to original days and try to schedule until we reach the end of available times.
 
         fileData.setStrDays(strOriginalDays);
-        LocalTime newStartTime = timeOriginalStart.plus(lngBlockTimeHours, ChronoUnit.HOURS);
-        LocalTime newEndTime = timeOriginalEnd.plus(lngBlockTimeHours, ChronoUnit.HOURS);
+        LocalTime newStartTime = timeOriginalStart.plus((lngBlockTimeHours / 2), ChronoUnit.HOURS);
+        LocalTime newEndTime = timeOriginalEnd.plus((lngBlockTimeHours / 2), ChronoUnit.HOURS);
         /* loop through and change the start and end times and try to schedule until our new end time will be after our
            last available class time */
-        while(newEndTime.isBefore(LAST_SCHEDULE_TIME_MR)){
+        while(newEndTime.isBefore(LAST_SCHEDULE_TIME_MR) || newEndTime.equals(LAST_SCHEDULE_TIME_MR)){
             lstScheduledTUIDS = getScheduledCoursesInTime(fileData.getStrDays(), newStartTime, newEndTime);
             fileData.setStrStartTime(newStartTime.toString());
             fileData.setStrEndTime(newEndTime.toString());
             if(trySchedule(fileData, lstScheduledTUIDS, intNewCourseSection))
                 return;
-            newStartTime = newStartTime.plus(lngBlockTimeHours, ChronoUnit.HOURS);
-            newEndTime = newEndTime.plus(lngBlockTimeHours, ChronoUnit.HOURS);
+            newStartTime = newStartTime.plus((lngBlockTimeHours / 2), ChronoUnit.HOURS);
+            newEndTime = newEndTime.plus((lngBlockTimeHours / 2), ChronoUnit.HOURS);
         }
 
         //part four : try all other times after and then before original times on adjacent days
 
         fileData.setStrDays(switchToAdjacentDays(strOriginalDays));
-        newStartTime = timeOriginalStart.plus(lngBlockTimeHours, ChronoUnit.HOURS);
-        newEndTime = timeOriginalEnd.plus(lngBlockTimeHours, ChronoUnit.HOURS);
-        while(newEndTime.isBefore(LAST_SCHEDULE_TIME_MR)){
+        newStartTime = timeOriginalStart.plus((lngBlockTimeHours / 2), ChronoUnit.HOURS);
+        newEndTime = timeOriginalEnd.plus((lngBlockTimeHours / 2), ChronoUnit.HOURS);
+        while(newEndTime.isBefore(LAST_SCHEDULE_TIME_MR) || newEndTime.equals(LAST_SCHEDULE_TIME_MR)){
             lstScheduledTUIDS = getScheduledCoursesInTime(fileData.getStrDays(), newStartTime, newEndTime);
             fileData.setStrStartTime(newStartTime.toString());
             fileData.setStrEndTime(newEndTime.toString());
             if(trySchedule(fileData, lstScheduledTUIDS, intNewCourseSection))
                 return;
-            newStartTime = newStartTime.plus(lngBlockTimeHours, ChronoUnit.HOURS);
-            newEndTime = newEndTime.plus(lngBlockTimeHours, ChronoUnit.HOURS);
+            newStartTime = newStartTime.plus((lngBlockTimeHours / 2), ChronoUnit.HOURS);
+            newEndTime = newEndTime.plus((lngBlockTimeHours / 2), ChronoUnit.HOURS);
         }
         //now try before
-        newStartTime = FIRST_SCHEDULE_TIME_MR.plus(lngBlockTimeHours, ChronoUnit.HOURS);
-        newEndTime = FIRST_SCHEDULE_TIME_MR.plus(lngBlockTimeHours, ChronoUnit.HOURS);
-        while(newEndTime.isBefore(timeOriginalStart)){
+        newStartTime = FIRST_SCHEDULE_TIME_MR.plus((lngBlockTimeHours / 2), ChronoUnit.HOURS);
+        newEndTime = FIRST_SCHEDULE_TIME_MR.plus((lngBlockTimeHours / 2), ChronoUnit.HOURS);
+        while(newEndTime.isBefore(timeOriginalStart) || newEndTime.equals(timeOriginalStart)){
             lstScheduledTUIDS = getScheduledCoursesInTime(fileData.getStrDays(), newStartTime, newEndTime);
             fileData.setStrStartTime(newStartTime.toString());
             fileData.setStrEndTime(newEndTime.toString());
             if(trySchedule(fileData, lstScheduledTUIDS, intNewCourseSection))
                 return;
-            newStartTime = newStartTime.plus(lngBlockTimeHours, ChronoUnit.HOURS);
-            newEndTime = newEndTime.plus(lngBlockTimeHours, ChronoUnit.HOURS);
+            newStartTime = newStartTime.plus((lngBlockTimeHours / 2), ChronoUnit.HOURS);
+            newEndTime = newEndTime.plus((lngBlockTimeHours / 2), ChronoUnit.HOURS);
         }
 
         //part five : try all times before the original times on the original days
         fileData.setStrDays(strOriginalDays);
-        newStartTime = FIRST_SCHEDULE_TIME_MR.plus(lngBlockTimeHours, ChronoUnit.HOURS);
-        newEndTime = FIRST_SCHEDULE_TIME_MR.plus(lngBlockTimeHours, ChronoUnit.HOURS);
-        while(newEndTime.isBefore(timeOriginalStart)){
+        newStartTime = FIRST_SCHEDULE_TIME_MR.plus((lngBlockTimeHours / 2), ChronoUnit.HOURS);
+        newEndTime = FIRST_SCHEDULE_TIME_MR.plus((lngBlockTimeHours / 2), ChronoUnit.HOURS);
+        while(newEndTime.isBefore(timeOriginalStart) || newEndTime.equals(timeOriginalEnd)){
             lstScheduledTUIDS = getScheduledCoursesInTime(fileData.getStrDays(), newStartTime, newEndTime);
             fileData.setStrStartTime(newStartTime.toString());
             fileData.setStrEndTime(newEndTime.toString());
             if(trySchedule(fileData, lstScheduledTUIDS, intNewCourseSection))
                 return;
-            newStartTime = newStartTime.plus(lngBlockTimeHours, ChronoUnit.HOURS);
-            newEndTime = newEndTime.plus(lngBlockTimeHours, ChronoUnit.HOURS);
+            newStartTime = newStartTime.plus((lngBlockTimeHours / 2), ChronoUnit.HOURS);
+            newEndTime = newEndTime.plus((lngBlockTimeHours / 2), ChronoUnit.HOURS);
         }
 
         //part six : try fridays
         //since Friday classes are twice as long we have to watch how we increment
         fileData.setStrDays("F");
         newStartTime = FIRST_SCHEDULE_TIME_F;
-        newEndTime = newStartTime.plus((2 * lngBlockTimeHours), ChronoUnit.HOURS);
+        newEndTime = newStartTime.plus(lngBlockTimeHours, ChronoUnit.HOURS);
         while(newEndTime.isBefore(LAST_SCHEDULE_TIME_F) || newEndTime.equals(LAST_SCHEDULE_TIME_F)){
             lstScheduledTUIDS = getScheduledCoursesInTime(fileData.getStrDays(), newStartTime, newEndTime);
             fileData.setStrStartTime(newStartTime.toString());
             fileData.setStrEndTime(newEndTime.toString());
             if(trySchedule(fileData, lstScheduledTUIDS, intNewCourseSection))
                 return;
-            newStartTime = newStartTime.plus((2 *lngBlockTimeHours), ChronoUnit.HOURS);
-            newEndTime = newEndTime.plus((2 * lngBlockTimeHours), ChronoUnit.HOURS);
+            newStartTime = newStartTime.plus(lngBlockTimeHours, ChronoUnit.HOURS);
+            newEndTime = newEndTime.plus(lngBlockTimeHours, ChronoUnit.HOURS);
         }
 
         //we could not schedule the course, so we need to print out that it was not scheduled
@@ -428,10 +411,8 @@ public class SchedulerObject {
                     scheduleTwoCredit(fileData);
                     break;
                 case 3:
-                    scheduleThreeCredit(fileData);
-                    break;
                 case 4:
-                    scheduleFourCredit(fileData);
+                    scheduleFourOrThreeCredit(fileData);
                     break;
                 default:
                     System.out.println("Hit default in schedule method. Somehow");

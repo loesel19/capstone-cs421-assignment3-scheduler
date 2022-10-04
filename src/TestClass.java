@@ -538,6 +538,32 @@ public class TestClass {
         }
         return true;
     }
+    public static boolean ScheduleTest4() throws SQLException, ClassNotFoundException, IOException {
+        /**
+         * Name : ScheduleTest4
+         * Returns : boolean - true -> test passed, false -> test failed.
+         * Purpose : The purpose of this test is to see if we can schedule both 4 and 3 credit courses at the same time.
+         */
+        System.out.println("STARTING SCHEDULE TEST 4 ...");
+        DAO.endSession();
+        DAO.startUp();
+        try {
+            FileInteractionObject fileInteractionObject = new FileInteractionObject();
+            fileInteractionObject.instanciateBufferedReader("Test_Fill_Three_And_Four_Cred.txt");
+            SchedulerObject schedulerObject = new SchedulerObject(DAO, fileInteractionObject);
+            schedulerObject.scheduleAll(fileInteractionObject.readAllFileLine());
+        } catch (Exception ex){
+            ex.printStackTrace();
+            return false;
+        }
+        HashMap<String, ArrayList<objSchedule>> mapAllScheduled = DAO.getAllScheduled();
+        for(Map.Entry<String, ArrayList<objSchedule>> e : mapAllScheduled.entrySet()){
+            for(objSchedule s : e.getValue()){
+                System.out.println(s.toString());
+            }
+        }
+        return true;
+    }
     public static void runScheduleTests() throws SQLException, ClassNotFoundException, IOException {
         /**
          * Name : runScheduleTests
@@ -548,6 +574,7 @@ public class TestClass {
         System.out.println("SCHEDULE TEST 1 : " + ScheduleTest1());
         //System.out.println("SCHEDULE TEST 2 : " + ScheduleTest2());
         System.out.println("SCHEDULE TEST 3 : " + ScheduleTest3());
+        System.out.println("SCHEDULE TEST 4 : " + ScheduleTest4());
         System.out.println("END SCHEDULE TESTS .....");
     }
 }
