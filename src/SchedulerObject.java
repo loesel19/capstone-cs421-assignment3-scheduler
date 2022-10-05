@@ -29,10 +29,13 @@ public class SchedulerObject {
     private FileInteractionObject fileInteractionObject;  //the object we have created to deal with our file interactions.
     private static final String One_Credit_Hour_Start_Time_Pattern = "([0-1]?[0-3]|9):00"; //the regex pattern used to schedule 1 credit hour classes.
     private static final String SCHEDULE_TABLE_STRING = "Schedule_Table"; //the name of our schedule table in the database
-    private static final LocalTime FIRST_SCHEDULE_TIME_MR = LocalTime.of(8, 30); //the first time a course can start at on Monday through Thursday
-    private static final LocalTime LAST_SCHEDULE_TIME_MR = LocalTime.of(16, 30); //the last time a course can go until on Monday through Thursday
-    private static final LocalTime FIRST_SCHEDULE_TIME_F = LocalTime.of(8, 30); //the first time a course can be scheduled on friday
-    private static final LocalTime LAST_SCHEDULE_TIME_F = LocalTime.of(16,30); //the last time a course can be scheduled on friday
+    private static final LocalTime FIRST_SCHEDULE_TIME_MR_4Cred = LocalTime.of(8, 30); //the first time a 4 credit course can start at on Monday through Thursday
+    private static final LocalTime FIRST_SCHEDULE_TIME_MR_3Cred = LocalTime.of(9,0); //the first time a 3 credit course can start monday through thursday
+    private static final LocalTime FIRST_SCHEDULE_TIME_MR_2And1Cred = LocalTime.of(9,0); //the first time 1 or 2 credit course can start monday through thursday
+    private static final LocalTime LAST_SCHEDULE_TIME_MR_4And3Cred = LocalTime.of(16, 30); //the last time a course can go until on Monday through Thursday
+    private static final LocalTime LAST_SCHEDULE_TIME_F_3Cred = LocalTime.of(16,0); //the last time a 3 cred class can go until Monday through Thursday
+    private static final LocalTime LAST_SCHEDULE_TIME_MR_2Cred = LocalTime.of(14,0); //the last time a 2 hour course can be scheduled on monday through thursday
+    private static final LocalTime LAST_SCHEDULE_TIME_MR_1Cred = LocalTime.of(15, 0); //the last time a 1 hour course can be scheduled on monday through thursday
 
 
 
@@ -277,6 +280,7 @@ public class SchedulerObject {
         String strOriginalDays = fileData.getStrDays();
         objCourse course = databaseAccessObject.getCourse(fileData.getStrCourseName());
         long lngBlockTimeHours = course.getIntCreditHours(); //the hours we need for our 2 day class periods //TODO get this from intCreditHours
+        long lngBlockTimeMinutes = (long) ((((double)course.getIntCreditHours() / 2.0) * 60) % 60);
         //part one : try to schedule on desired days/ times
 
         ArrayList lstScheduledTUIDS = getScheduledCoursesInTime(strOriginalDays, timeOriginalStart, timeOriginalEnd);
@@ -295,9 +299,11 @@ public class SchedulerObject {
         fileData.setStrDays(strOriginalDays);
         LocalTime newStartTime = timeOriginalStart.plus((lngBlockTimeHours / 2), ChronoUnit.HOURS);
         LocalTime newEndTime = timeOriginalEnd.plus((lngBlockTimeHours / 2), ChronoUnit.HOURS);
+        //get last time for 3 or 4 credit class depending on how many credit hours this course is
+        LocalTime lastTime = LAST_SCHEDULE_TIME_MR_4And3Cred;
         /* loop through and change the start and end times and try to schedule until our new end time will be after our
            last available class time */
-        while(newEndTime.isBefore(LAST_SCHEDULE_TIME_MR) || newEndTime.equals(LAST_SCHEDULE_TIME_MR)){
+        while(newEndTime.isBefore(lastTime) || newEndTime.equals(lastTime)){
             lstScheduledTUIDS = getScheduledCoursesInTime(fileData.getStrDays(), newStartTime, newEndTime);
             fileData.setStrStartTime(newStartTime.toString());
             fileData.setStrEndTime(newEndTime.toString());
@@ -312,7 +318,7 @@ public class SchedulerObject {
         fileData.setStrDays(switchToAdjacentDays(strOriginalDays));
         newStartTime = timeOriginalStart.plus((lngBlockTimeHours / 2), ChronoUnit.HOURS);
         newEndTime = timeOriginalEnd.plus((lngBlockTimeHours / 2), ChronoUnit.HOURS);
-        while(newEndTime.isBefore(LAST_SCHEDULE_TIME_MR) || newEndTime.equals(LAST_SCHEDULE_TIME_MR)){
+        while(newEndTime.isBefore(lastTime) || newEndTime.equals(lastTime)){
             lstScheduledTUIDS = getScheduledCoursesInTime(fileData.getStrDays(), newStartTime, newEndTime);
             fileData.setStrStartTime(newStartTime.toString());
             fileData.setStrEndTime(newEndTime.toString());
@@ -322,8 +328,12 @@ public class SchedulerObject {
             newEndTime = newEndTime.plus((lngBlockTimeHours / 2), ChronoUnit.HOURS);
         }
         //now try before
-        newStartTime = FIRST_SCHEDULE_TIME_MR.plus((lngBlockTimeHours / 2), ChronoUnit.HOURS);
-        newEndTime = FIRST_SCHEDULE_TIME_MR.plus((lngBlockTimeHours / 2), ChronoUnit.HOURS);
+        if(course.getIntCreditHours() == 3)
+            newStartTime = FIRST_SCHEDULE_TIME_MR_3Cred;
+        else
+            newStartTime = FIRST_SCHEDULE_TIME_MR_4Cred;
+
+        newEndTime = newStartTime.plus((lngBlockTimeHours / 2), ChronoUnit.HOURS);
         while(newEndTime.isBefore(timeOriginalStart) || newEndTime.equals(timeOriginalStart)){
             lstScheduledTUIDS = getScheduledCoursesInTime(fileData.getStrDays(), newStartTime, newEndTime);
             fileData.setStrStartTime(newStartTime.toString());
@@ -336,8 +346,12 @@ public class SchedulerObject {
 
         //part five : try all times before the original times on the original days
         fileData.setStrDays(strOriginalDays);
-        newStartTime = FIRST_SCHEDULE_TIME_MR.plus((lngBlockTimeHours / 2), ChronoUnit.HOURS);
-        newEndTime = FIRST_SCHEDULE_TIME_MR.plus((lngBlockTimeHours / 2), ChronoUnit.HOURS);
+        if(course.getIntCreditHours() == 3)
+            newStartTime = FIRST_SCHEDULE_TIME_MR_3Cred;
+        else
+            newStartTime = FIRST_SCHEDULE_TIME_MR_4Cred;
+
+        newEndTime = newStartTime.plus((lngBlockTimeHours / 2), ChronoUnit.HOURS);
         while(newEndTime.isBefore(timeOriginalStart) || newEndTime.equals(timeOriginalEnd)){
             lstScheduledTUIDS = getScheduledCoursesInTime(fileData.getStrDays(), newStartTime, newEndTime);
             fileData.setStrStartTime(newStartTime.toString());
@@ -351,16 +365,22 @@ public class SchedulerObject {
         //part six : try fridays
         //since Friday classes are twice as long we have to watch how we increment
         fileData.setStrDays("F");
-        newStartTime = FIRST_SCHEDULE_TIME_F;
+        if(course.getIntCreditHours() == 3) {
+            newStartTime = FIRST_SCHEDULE_TIME_MR_3Cred;
+            lastTime = LAST_SCHEDULE_TIME_F_3Cred;
+        }else{
+            newStartTime = FIRST_SCHEDULE_TIME_MR_4Cred;
+            lastTime = LAST_SCHEDULE_TIME_MR_4And3Cred;
+        }
         newEndTime = newStartTime.plus(lngBlockTimeHours, ChronoUnit.HOURS);
-        while(newEndTime.isBefore(LAST_SCHEDULE_TIME_F) || newEndTime.equals(LAST_SCHEDULE_TIME_F)){
+        while(newEndTime.isBefore(lastTime) || newEndTime.equals(lastTime)){
             lstScheduledTUIDS = getScheduledCoursesInTime(fileData.getStrDays(), newStartTime, newEndTime);
             fileData.setStrStartTime(newStartTime.toString());
             fileData.setStrEndTime(newEndTime.toString());
             if(trySchedule(fileData, lstScheduledTUIDS, intNewCourseSection))
                 return;
-            newStartTime = newStartTime.plus(lngBlockTimeHours, ChronoUnit.HOURS);
-            newEndTime = newEndTime.plus(lngBlockTimeHours, ChronoUnit.HOURS);
+            newStartTime = newStartTime.plus(1, ChronoUnit.HOURS);
+            newEndTime = newEndTime.plus(1, ChronoUnit.HOURS);
         }
 
         //we could not schedule the course, so we need to print out that it was not scheduled
