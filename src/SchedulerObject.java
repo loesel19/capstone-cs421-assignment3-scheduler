@@ -280,7 +280,10 @@ public class SchedulerObject {
         String strOriginalDays = fileData.getStrDays();
         objCourse course = databaseAccessObject.getCourse(fileData.getStrCourseName());
         long lngBlockTimeHours = course.getIntCreditHours(); //the hours we need for our 2 day class periods //TODO get this from intCreditHours
-        long lngBlockTimeMinutes = (long) ((((double)course.getIntCreditHours() / 2.0) * 60) % 60);
+        long lngMinutes = (long) ((((double)course.getIntCreditHours() / 2.0) * 60) % 60); /* this equation is used to put
+         any minutes we have remaining after a course time is cut in half for split classes into a variable to add to
+         a LocalTime when we loop through slots. It will come in handy for 3 credit hour courses. */
+
         //part one : try to schedule on desired days/ times
 
         ArrayList lstScheduledTUIDS = getScheduledCoursesInTime(strOriginalDays, timeOriginalStart, timeOriginalEnd);
