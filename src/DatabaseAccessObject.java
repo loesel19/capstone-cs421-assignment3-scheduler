@@ -558,7 +558,6 @@ public class DatabaseAccessObject {
         return highestCapacityAvailableClassroom;
     }
     public boolean addSchedule(objFileData fileData, int intClassroomTUID, int intNewSection) throws SQLException, ClassNotFoundException {
-        //TODO REWORK THIS
         boolean blnAdded = false;
         //get connection and sql statement objects
         Connection connection = getConnection();
