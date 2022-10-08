@@ -989,4 +989,92 @@ public class DatabaseAccessObject {
         connection.close();
         return intNewSection;
     }
+    private String byTimeSQLString(String strWhereClause){
+        /**
+         *
+         */
+        return "SELECT SCHEDULE_TABLE.TUID, PROFESSOR_NAME, CLASSROOM_NAME, CAPACITY, COURSE_ID, COURSE_SECTION, " +
+                "SCHEDULE_TABLE.START_TIME, SCHEDULE_TABLE.END_TIME, SCHEDULE_TABLE.DAYS " +
+                "FROM SCHEDULE_TABLE INNER JOIN CLASSROOM_TABLE ON SCHEDULE_TABLE.CLASSROOM_TUID = " +
+                "CLASSROOM_TABLE.TUID INNER JOIN COURSES_TABLE ON SCHEDULE_TABLE.COURSE_TUID = COURSES_TABLE.TUID " +
+                "INNER JOIN PROFESSOR_TABLE ON SCHEDULE_TABLE.PROFESSOR_TUID = PROFESSOR_TABLE.TUID " +
+                 strWhereClause + " ORDER BY DAYS, START_TIME, COURSE_SECTION;";
+    }
+    private objSchedulingTuple getPartialDayTimeList(Connection connection,  Statement statement, ArrayList<Integer> lstAlreadySeenTUIDS, String strSQL){
+        /**
+         * @Name : getPartialDayTimeList
+         * @Params : connection
+         *           statement - an opened SQL statement
+         *           lstAlreadySeenTUIDS - an arraylist containing tuids corresponding to schedule_table entries already accounted for
+         *           strSQL - the SQL we execute to get our results
+         * @Returns : objSchedulingTuple - a tuple containing a list of all the courses that we saw in this method,
+         *            and the continually building list of all the schedule table tuids that we have seen.
+         * @Purpose : The purpose of this method is to execute our sql statement, and add all of the results to a list
+         *            representing a partial portion of our schedule report sorted by day/time.
+         */
+        ArrayList<objReport> lstPartial = new ArrayList<>();
+        try{
+            ResultSet resultSet = statement.executeQuery(strSQL);
+            while(resultSet.next()){
+                //go to next loop iteration if we have already seen this SCHEDULE table TUID
+                if(lstAlreadySeenTUIDS.contains(resultSet.getInt("TUID")))
+                    continue;
+                //add a new object representing this data to lstScheduledCourses.
+                lstPartial.add(new objReport(resultSet.getInt(1), resultSet.getString(5), resultSet.getInt(6),
+                        resultSet.getString(2), resultSet.getString(3), resultSet.getInt(4),
+                        resultSet.getString(9), resultSet.getString(7), resultSet.getString(8)));
+                lstAlreadySeenTUIDS.add(resultSet.getInt(1));
+            }
+            //So M and MW are taken care of, now we want T, TR and W. We can take of this with a single Where clause
+            strSQL = byTimeSQLString("WHERE (DAYS like'T%' OR DAYS like'W')");
+            //now run and loop again
+            //SELECT * FROM SCHEDULE_TABLE WHERE DAYS like'%M%' ORDER BY START_TIME;
+        } catch (Exception ex){
+            //if an exception is thrown return null
+            ex.printStackTrace();
+            lstPartial = null;
+        }
+        return new objSchedulingTuple(lstPartial, lstAlreadySeenTUIDS);
+    }
+    public ArrayList<objReport> getScheduledCoursesByDayTime() throws SQLException, ClassNotFoundException {
+        /**
+         * @Name : getScheduledCoursesByDayTime
+         * @Params : none
+         * @Returns : lstScheduledCourses
+         * @Purpose : The purpose of this method is to return an arraylist that represents our schedule sorted by days M-F
+         *            and start time 8:30 - 3:00
+         * @Notes : The data collection will be split into a few different sql queries. First we will get courses on
+         *          M, then MW, then T, then W, then TR, then F. A second array list will be used to store Schedule_Table
+         *          TUIDS for scheduled courses that have been added to our sorted arraylist so that a M only course is
+         *          not also accounted for when we add MW courses.
+         */
+        ArrayList<objReport> lstScheduledCourses = new ArrayList<>(); //the list with we store our schedule objects in
+        ArrayList<Integer> lstAlreadySeenTUIDS = new ArrayList<>(); //the list that will store courses that we have already seen
+        Connection connection = getConnection();
+        Statement statement = connection.createStatement();
+
+        String strSQL = byTimeSQLString("WHERE (DAYS like'M%' OR DAYS)");
+        objSchedulingTuple tuple = getPartialDayTimeList(connection, statement, lstAlreadySeenTUIDS, strSQL);
+        lstScheduledCourses.addAll(tuple.getCourses());
+        lstAlreadySeenTUIDS = tuple.getSeenTUIDS();
+        //So M and MW are taken care of, now we want T, TR and W. We can take of this with a single Where clause
+        strSQL = byTimeSQLString("WHERE (DAYS like'T%' OR DAYS like'W')");
+        tuple = getPartialDayTimeList(connection, statement, lstAlreadySeenTUIDS, strSQL);
+        lstScheduledCourses.addAll(tuple.getCourses());
+        lstAlreadySeenTUIDS = tuple.getSeenTUIDS();
+        //next we want to do R and F, the way we have constructed our methods means we need to do this in two sql queries
+        strSQL = byTimeSQLString("WHERE DAYS = 'R'");
+        tuple = getPartialDayTimeList(connection, statement, lstAlreadySeenTUIDS, strSQL);
+        lstScheduledCourses.addAll(tuple.getCourses());
+        lstAlreadySeenTUIDS = tuple.getSeenTUIDS();
+        //now do F
+        strSQL = byTimeSQLString("WHERE DAYS = 'F'");
+        tuple = getPartialDayTimeList(connection, statement, lstAlreadySeenTUIDS, strSQL);
+        lstScheduledCourses.addAll(tuple.getCourses());
+        //close sql objects
+        statement.close();
+        connection.close();
+        //return our list of scheduled courses.
+        return lstScheduledCourses;
+    }
 }

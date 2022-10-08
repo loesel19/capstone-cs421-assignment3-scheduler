@@ -123,9 +123,9 @@ public class SchedulerObject {
          * Params : strDays - the Days we want to check the schedule on.
          *          strStartTime - the start time we want to schedule a class for
          *          strEndTime - the end time we want to schedule a class for
-         * Returns : lstAccountedForTUIDS - an arraylist containing the Scheudle_Table TUIDS for courses that are scheduled
+         * Returns : lstAccountedForTUIDS - an arraylist containing the Schedule_Table TUIDS for courses that are scheduled
          *                                  during the desired time slot.
-         * Purpose : The purpose of this function is to get a list containing TUIDS for all courses whose time day combinitation
+         * Purpose : The purpose of this function is to get a list containing TUIDS for all courses whose time day combination
          *           is in conflict with the time slot of the class we want to schedule. we do this by first getting all courses
          *           scheduled on the days of our course. We then loop through each scheduled course and check if it conflicts with
          *           the course we want to schedule. While looping we maintain our arraylist of TUIDs as integers so that we can
@@ -623,6 +623,30 @@ public class SchedulerObject {
             Schedule(d);
         }
     }
+    public void printReportDayTime(){
+        /**
+         * @Name : printReportDayTime
+         * @Params : none
+         * @Returns : none
+         * @Purpose :
+         */
 
+    }
+    public void printReportProfessor(){
+        /**
+         * @Name : printReportProfessor
+         * @Params : none
+         * @Returns : none
+         * @Purpose
+         */
+    }
+    public void printReportCourse(){
+        /**
+         * @Name : printReportCourse
+         * @Params : none
+         * @Returns : none
+         * @Purpose
+         */
+    }
 
 }
