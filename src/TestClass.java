@@ -564,6 +564,20 @@ public class TestClass {
         }
         return true;
     }
+    public static boolean ScheduleTest5() throws IOException, SQLException, ClassNotFoundException {
+        /**
+         * Name : ScheduleTest5
+         * Returns : boolean - true -> test passed, false -> test failed
+         * Purpose : The purpose of this class is to test scheduling 1 and 2 credit courses, we just read them in
+         *           from a file and then try to schedule them all.
+         */
+        FileInteractionObject fileInteractionObject = new FileInteractionObject();
+        fileInteractionObject.instanciateBufferedReader("Test_Schedule_1_2_Cred.txt");
+        SchedulerObject schedulerObject = new SchedulerObject(DAO, fileInteractionObject);
+        schedulerObject.scheduleAll(fileInteractionObject.readAllFileLine());
+
+        return true;
+    }
     public static void runScheduleTests() throws SQLException, ClassNotFoundException, IOException {
         /**
          * Name : runScheduleTests

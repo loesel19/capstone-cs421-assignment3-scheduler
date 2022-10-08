@@ -32,6 +32,7 @@ public class DatabaseAccessObject {
     private static final String COURSE_CATALOG_PATH_STRING = "Course_Catalog.txt";//the path of the course catalog we want to use
     private static final String CLASSROOM_CATALOG_PATH_STRING = "Classroom_Catalog.txt"; //the path of the classroom catalog we want to use
     private static final String PROFESSOR_CATALOG_PATH_STRING = "Professor_Catalog.txt"; //the path of the professor catalog we want to use
+    private static final String DATABASE_NAME = "ScheduleDatabase";
 
     //SUBPROGRAMS SUBPROGRAMS SUBPROGRAMS SUBPROGRAMS SUBPROGRAMS
     private static Connection getConnection() throws ClassNotFoundException, SQLException{
@@ -52,20 +53,23 @@ public class DatabaseAccessObject {
          * Params : none.
          * Returns : boolean | true -> exists, false -> does not exist.
          * Purpose : this method will be to check if the database exists when the application is started up.
-         *           We simply want to check and see if  //TODO//
+         *           We simply want to check and see if  //
          * Notes :
          */
         boolean blnExists = false;
+        Connection con = getConnection();
+        Statement statement = con.createStatement();
         try{
             /* to see if the db exists we will try to get the connection, and execute a sql statement on one of the tables */
-            Connection con = getConnection();
-            Statement statement = con.createStatement();
+
             statement.execute("SELECT * FROM " + PROFESSOR_TABLE_STRING + "");
             blnExists = true;
-            con.close();
+
         }catch (Exception ex){
             blnExists = false;
         }
+        statement.close();
+        con.close();
         return blnExists;
     }
     private boolean createProfessorTable() throws SQLException, ClassNotFoundException {
@@ -202,7 +206,7 @@ public class DatabaseAccessObject {
          * Notes :
          */
         try {
-            File dbFile = new File("ScheduleDatabase.db");
+            File dbFile = new File(dbFileName);
             if(dbFile.delete()){
                 System.out.println("Old Database has been deleted.");
                 return;
