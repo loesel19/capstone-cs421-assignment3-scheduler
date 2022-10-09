@@ -33,4 +33,8 @@ public class objReport {
         this.strStartTime = strStartTime;
         this.strEndTime = strEndTime;
     }
+    public String toString(){
+        return this.strCourseName + " " + this.intCourseSection + " " + this.strProfessorName + " " + this.strClassroomName + " " +
+                this.intClassroomCapacity + " " + this.strDays + " " + this.strStartTime + " " + this.strEndTime;
+    }
 }

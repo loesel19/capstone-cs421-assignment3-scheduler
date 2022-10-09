@@ -38,8 +38,9 @@ public class UserInteractionObject {
         fileInteractionObject.instanciateBufferedReader(getInput());
         schedulerObject = new SchedulerObject(databaseAccessObject, fileInteractionObject);
         schedulerObject.scheduleAll(fileInteractionObject.readAllFileLine());
+        middleFlow();
     }
-    public void readInput(String strInput) throws IOException, SQLException, ClassNotFoundException {
+    private void readInput(String strInput) throws IOException, SQLException, ClassNotFoundException {
         /**
          * @Name : readInput
          * @Params : strInput - the string that will determine the action the method takes.
@@ -61,9 +62,14 @@ public class UserInteractionObject {
                 fileInteractionObject.instanciateBufferedReader(getInput());
                 schedulerObject.scheduleAll(fileInteractionObject.readAllFileLine());
                 break;
+            case "X":
+                endSession();
+                break;
+            default:
+                break;
         }
     }
-    public void reportMenu(){
+    private void reportMenu(){
         /**
          * @Name : viewReporst
          * @Params : none
@@ -73,8 +79,10 @@ public class UserInteractionObject {
         System.out.println("Press 'D' to see current schedule by Day/Time.");
         System.out.println("Press 'P' to see current schedule by Professor.");
         System.out.println("Press 'C' to see current schedule by Course Name.");
+        System.out.println("Press 'S' to schedule another file.");
+        promptQuit();
     }
-    public void newFileMenu(){
+    private void newFileMenu(){
         /**
          * @Name : newFileMenu
          * @Params : none
@@ -82,6 +90,15 @@ public class UserInteractionObject {
          * @Purpose :
          */
         System.out.println("Input 'S' to schedule another file.");
+    }
+    private void promptQuit(){
+        /**
+         * @Name : promptQuit
+         * @Params : none
+         * @Returns : none
+         * @Purpose :
+         */
+        System.out.println("Press 'X' to close the application.");
     }
     public void endSession() throws SQLException, ClassNotFoundException {
         /**
@@ -91,6 +108,9 @@ public class UserInteractionObject {
          * @Purpose :
          */
         databaseAccessObject.endSession();
+        schedulerObject = null;
+        fileInteractionObject = null;
+        databaseAccessObject = null;
     }
     private String getInput(){
         /**
@@ -101,5 +121,21 @@ public class UserInteractionObject {
          */
         Scanner scanner = new Scanner(System.in);
         return scanner.next().toUpperCase(Locale.ROOT);
+    }
+    public void middleFlow() throws IOException, SQLException, ClassNotFoundException {
+        /**
+         * @Name : middleFlow
+         * @Params : none
+         * @Returns : none
+         * @Purpose :
+         */
+        promptFilePath();
+        fileInteractionObject.instanciateBufferedReader(getInput());
+        schedulerObject.scheduleAll(fileInteractionObject.readAllFileLine());
+        //now loop until user wishes to exit
+        while(schedulerObject != null) {
+            reportMenu();
+            readInput(getInput());
+        }
     }
 }

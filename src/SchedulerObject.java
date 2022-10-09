@@ -623,22 +623,31 @@ public class SchedulerObject {
             Schedule(d);
         }
     }
-    public void printReportDayTime(){
+    public void printReportDayTime() throws SQLException, ClassNotFoundException {
         /**
          * @Name : printReportDayTime
          * @Params : none
          * @Returns : none
          * @Purpose :
          */
-
+        ArrayList<objReport> lstReport = databaseAccessObject.getScheduledCoursesByDayTime();
+        System.out.println("Printing out report by day and time");
+        for (objReport r : lstReport){
+            System.out.println(r.toString());
+        }
     }
-    public void printReportProfessor(){
+    public void printReportProfessor() throws SQLException, ClassNotFoundException {
         /**
          * @Name : printReportProfessor
          * @Params : none
          * @Returns : none
          * @Purpose
          */
+        ArrayList<objReport> lstReport = databaseAccessObject.getScheduledCoursesByProfessor();
+        System.out.println("Printing out report by day and time");
+        for (objReport r : lstReport){
+            System.out.println(r.toString());
+        }
     }
     public void printReportCourse(){
         /**
