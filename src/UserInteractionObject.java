@@ -100,16 +100,17 @@ public class UserInteractionObject {
          */
         System.out.println("Press 'X' to close the application.");
     }
-    public void endSession() throws SQLException, ClassNotFoundException {
+    public void endSession() throws SQLException, ClassNotFoundException, IOException {
         /**
          * @Name : endSession
          * @Params :
          * @Returns :
          * @Purpose :
          */
-        databaseAccessObject.endSession();
         schedulerObject = null;
+        fileInteractionObject.closeBufferedReader();
         fileInteractionObject = null;
+        databaseAccessObject.endSession();
         databaseAccessObject = null;
     }
     private String getInput(){

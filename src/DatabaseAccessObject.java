@@ -314,7 +314,7 @@ public class DatabaseAccessObject {
          */
         wipeScheduleTable();
     }
-    private void createDB(){
+    private void createDB() throws SQLException, ClassNotFoundException {
         /**
          * Name : createDB
          * Params : none.
@@ -322,8 +322,9 @@ public class DatabaseAccessObject {
          * Purpose : The purpose of this method is to create our database.
          * Notes :
          */
+
         try {
-            DatabaseMetaData metaData = getConnection().getMetaData();
+
             //create the tables for the database
             createTables();
             System.out.println("New database created.");
@@ -811,37 +812,6 @@ public class DatabaseAccessObject {
 
         return course;
     }
-    public objCourse getCourse(int intCourseTUID) throws SQLException, ClassNotFoundException {
-        /**
-         * Name : getCourse
-         * Params : intCourseTUID - The TUID of the the course we want to grab from the courses table, ex. 1
-         * Returns : course - the Course whose data we try to get from the database, if data extraction is a failure
-         *                    this object will be null.
-         * Purpose : In this method we try to get data from a course by querying our database courses table for
-         *           entries with this TUID. We Then return either a model of this data as an objCourse, or null.
-         * Notes : this is just a copy past of getCourse(String strCourseName) where the SQL string is changed to search on tuid.
-         */
-
-        objCourse course = null; //the course that we are trying to model data for
-        //create connection and statement objects
-        Connection connection = getConnection();
-        Statement statement = connection.createStatement();
-        //and a string to try and find a course with this id
-        String strSQL = "SELECT * FROM " + COURSE_TABLE_STRING + " WHERE TUID = '" + intCourseTUID + "';";
-        //now try and execute that statement
-        try{
-            ResultSet resultSet = statement.executeQuery(strSQL);
-            course = new objCourse(resultSet.getInt("TUID"), resultSet.getString("COURSE_ID"),
-                    resultSet.getString("COURSE_TITLE"), resultSet.getInt("CREDITS"));
-            resultSet.close();
-        }catch (Exception ex){
-            ex.printStackTrace();
-        }
-        statement.close();
-        connection.close();
-
-        return course;
-    }
     public objClassroom getClassroom(String strClassroomName) throws SQLException, ClassNotFoundException {
         /**
          * Name : getClassroom
@@ -936,6 +906,8 @@ public class DatabaseAccessObject {
         } catch(Exception ex){
             ex.printStackTrace();
         }
+        statement.close();
+        connection.close();
         return mapSchedule;
     }
     private String changeDay(String strDay){
@@ -952,20 +924,7 @@ public class DatabaseAccessObject {
                 return "-1";
         }
     }
-    public ResultSet queryDB(String strSQL) throws SQLException, ClassNotFoundException {
-        Connection connection = getConnection();
-        Statement statement = connection.createStatement();
-        ResultSet resultSet = null;
-        try {
-            resultSet = statement.executeQuery(strSQL);
-        } catch (Exception ex){
-            ex.printStackTrace();
-        }
-        statement.close();
-        connection.close();
-        return resultSet;
 
-    }
     public int getNewCourseSection(int Course_TUID) throws SQLException, ClassNotFoundException {
         /**
          * Name : getNewCourseSection
@@ -1080,12 +1039,28 @@ public class DatabaseAccessObject {
          * @Returns :
          * @Purpose :
          */
-        ArrayList<objReport> lstScheduledCourses = new ArrayList<>(); //the list with we store our schedule objects in
-        ArrayList<Integer> lstAlreadySeenTUIDS = new ArrayList<>(); //the list that will store courses that we have already seen
+
         Connection connection = getConnection();
         Statement statement = connection.createStatement();
         String strSQL = reportSQLString("ORDER BY Professor_Name,Course_ID, Course_Section, DAYS, start_time");
         objSchedulingTuple tuple = getPartialDayTimeList(statement, new ArrayList<Integer>(), strSQL);
+        statement.close();
+        connection.close();
+        return tuple.getCourses();
+    }
+    public ArrayList<objReport> getScheduledCoursesByCourse() throws SQLException, ClassNotFoundException {
+        /**
+         * @Name : getScheduledCoursesByCourse
+         * @Params : none
+         * @Returns :
+         * @Purpose :
+         */
+        Connection connection = getConnection();
+        Statement statement = connection.createStatement();
+        String strSQL = reportSQLString("ORDER BY Course_ID, Course_Section, DAYS, start_time");
+        objSchedulingTuple tuple = getPartialDayTimeList(statement, new ArrayList<Integer>(), strSQL);
+        statement.close();
+        connection.close();
         return tuple.getCourses();
     }
 }

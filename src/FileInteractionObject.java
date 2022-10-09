@@ -37,6 +37,15 @@ public class FileInteractionObject {
             return false;
         }
     }
+    public void closeBufferedReader() throws IOException {
+        /**
+         * @Name : closeBufferedReader
+         * @Params : none
+         * @Returns : none
+         * @Purpose : The purpose of this method is to close the buffered reader object of this object
+         */
+        this.bufferedReader.close();
+    }
     public objFileData readFileLine() throws IOException {
         /**
          * Name : readFileLine

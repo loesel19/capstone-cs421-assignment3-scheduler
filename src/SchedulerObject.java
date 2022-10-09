@@ -444,9 +444,6 @@ public class SchedulerObject {
          /* this equation is used to put
          any minutes we have remaining after a course time is cut in half for split classes into a variable to add to
          a LocalTime when we loop through slots. It will come in handy for 3 credit hour courses. */
-        if(course.getIntCourseTUID() == 3){
-            System.out.print("");
-        }
 
         //part one : try to schedule on desired days/ times
         /* lstScheduledTUIDS will frequently be assigned an arrayList of course tuids that are scheduled in the current
@@ -644,18 +641,23 @@ public class SchedulerObject {
          * @Purpose
          */
         ArrayList<objReport> lstReport = databaseAccessObject.getScheduledCoursesByProfessor();
-        System.out.println("Printing out report by day and time");
+        System.out.println("Printing out report by professor");
         for (objReport r : lstReport){
             System.out.println(r.toString());
         }
     }
-    public void printReportCourse(){
+    public void printReportCourse() throws SQLException, ClassNotFoundException {
         /**
          * @Name : printReportCourse
          * @Params : none
          * @Returns : none
          * @Purpose
          */
+        ArrayList<objReport> lstReport = databaseAccessObject.getScheduledCoursesByCourse();
+        System.out.println("Printing out report by course name");
+        for (objReport r : lstReport){
+            System.out.println(r.toString());
+        }
     }
 
 }
