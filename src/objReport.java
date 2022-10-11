@@ -33,6 +33,43 @@ public class objReport {
         this.strStartTime = strStartTime;
         this.strEndTime = strEndTime;
     }
+    //intellij generated getters
+    public int getIntTUID() {
+        return intTUID;
+    }
+
+    public String getStrCourseName() {
+        return strCourseName;
+    }
+
+    public int getIntCourseSection() {
+        return intCourseSection;
+    }
+
+    public String getStrProfessorName() {
+        return strProfessorName;
+    }
+
+    public String getStrClassroomName() {
+        return strClassroomName;
+    }
+
+    public int getIntClassroomCapacity() {
+        return intClassroomCapacity;
+    }
+
+    public String getStrDays() {
+        return strDays;
+    }
+
+    public String getStrStartTime() {
+        return strStartTime;
+    }
+
+    public String getStrEndTime() {
+        return strEndTime;
+    }
+
     public String toString(){
         return this.strCourseName + " " + this.intCourseSection + " " + this.strProfessorName + " " + this.strClassroomName + " " +
                 this.intClassroomCapacity + " " + this.strDays + " " + this.strStartTime + " " + this.strEndTime;

@@ -69,6 +69,14 @@ public class FileInteractionObject {
         return fileData;
     }
     public void writeOutSectionFile(HashMap<String, Integer> mapSections) throws IOException {
+        /**
+         * @Name : writeOutSectionFile
+         * @Params : mapSections - a map containing course names and their corresponding sections as key value pairs
+         * @Returns : none
+         * @Purpose : This method will write the section file out, ensuring that sections are preserved when the
+         *            program is closed and reopened. We will first delete the file if it exists, and then create
+         *            a new file. We write out every entry in mapSections as a line to the file, and flush the reader.
+         */
         File file = new File(SECTION_FILE_STRING);
         if(file.exists()){
            file.delete();
@@ -89,6 +97,13 @@ public class FileInteractionObject {
         file = null;
     }
     private HashMap<String, Integer> readSectionsFromFile() throws IOException {
+        /**
+         * @Name : readSectionsFromFile
+         * @Params : none
+         * @Returns : mapSections - a map containing course names and their corresponding sections as key value pairs
+         * @Purpose : The purpose of this file is to read the section file into a hashmap, when the file exists previously.
+         *            This is accomplished by reading the old file and parseing the file lines into entries in mapSections.
+         */
         HashMap<String, Integer> mapSections = new HashMap<>();
         BufferedReader br = new BufferedReader(new FileReader(SECTION_FILE_STRING));
         String line;
@@ -98,6 +113,15 @@ public class FileInteractionObject {
         return mapSections;
     }
     public HashMap<String, Integer> getSectionMap() throws IOException {
+        /**
+         * @Name : getSectionMap
+         * @Params : none
+         * @Returns : mapSections - a map containing course names and their corresponding sections as key value pairs
+         * @Purpose : The purpose of this file is to return our hashmap containing the courses and their corresponding
+         *            sections. If the section file does not exist, we will read the course catalog file into a list,
+         *            and create entries for every courseID with section 0. If the file exists we call readSectionsFromFile
+         *            and return the hashmap that that method returns.
+         */
         File file = new File(SECTION_FILE_STRING);
         HashMap<String, Integer> mapSection = new HashMap<>();
         if(!file.exists()){

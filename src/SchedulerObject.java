@@ -639,8 +639,13 @@ public class SchedulerObject {
          */
         ArrayList<objReport> lstReport = databaseAccessObject.getScheduledCoursesByDayTime();
         System.out.println("Printing out report by day and time");
+        System.out.println("--------------------------------------------------------------------------------------------------------");
+        System.out.println("Course ID     Section     Professor Name     Classroom     Capacity     Days     Start Time     End Time");
+        System.out.println("--------------------------------------------------------------------------------------------------------");
         for (objReport r : lstReport){
-            System.out.println(r.toString());
+            System.out.printf("%-13s %-11d %-18s %-13s %-12d %-8s %-14s %-8s\n", r.getStrCourseName(), r.getIntCourseSection(),
+                    r.getStrProfessorName(), r.getStrClassroomName(), r.getIntClassroomCapacity(), r.getStrDays(),
+                    r.getStrStartTime(), r.getStrEndTime());
         }
     }
     public void printReportProfessor() throws SQLException, ClassNotFoundException {
@@ -652,8 +657,13 @@ public class SchedulerObject {
          */
         ArrayList<objReport> lstReport = databaseAccessObject.getScheduledCoursesByProfessor();
         System.out.println("Printing out report by professor");
+        System.out.println("--------------------------------------------------------------------------------------------------------");
+        System.out.println("Course ID     Section     Professor Name     Classroom     Capacity     Days     Start Time     End Time");
+        System.out.println("--------------------------------------------------------------------------------------------------------");
         for (objReport r : lstReport){
-            System.out.println(r.toString());
+            System.out.printf("%-13s %-11d %-18s %-13s %-12d %-8s %-14s %-8s\n", r.getStrCourseName(), r.getIntCourseSection(),
+                    r.getStrProfessorName(), r.getStrClassroomName(), r.getIntClassroomCapacity(), r.getStrDays(),
+                    r.getStrStartTime(), r.getStrEndTime());
         }
     }
     public void printReportCourse() throws SQLException, ClassNotFoundException {
@@ -665,8 +675,13 @@ public class SchedulerObject {
          */
         ArrayList<objReport> lstReport = databaseAccessObject.getScheduledCoursesByCourse();
         System.out.println("Printing out report by course name");
+        System.out.println("--------------------------------------------------------------------------------------------------------");
+        System.out.println("Course ID     Section     Professor Name     Classroom     Capacity     Days     Start Time     End Time");
+        System.out.println("--------------------------------------------------------------------------------------------------------");
         for (objReport r : lstReport){
-            System.out.println(r.toString());
+            System.out.printf("%-13s %-11d %-18s %-13s %-12d %-8s %-14s %-8s\n", r.getStrCourseName(), r.getIntCourseSection(),
+                    r.getStrProfessorName(), r.getStrClassroomName(), r.getIntClassroomCapacity(), r.getStrDays(),
+                    r.getStrStartTime(), r.getStrEndTime());
         }
     }
 
