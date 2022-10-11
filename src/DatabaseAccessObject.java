@@ -33,6 +33,7 @@ public class DatabaseAccessObject {
     private static final String CLASSROOM_CATALOG_PATH_STRING = "Classroom_Catalog.txt"; //the path of the classroom catalog we want to use
     private static final String PROFESSOR_CATALOG_PATH_STRING = "Professor_Catalog.txt"; //the path of the professor catalog we want to use
     private static final String DATABASE_NAME = "ScheduleDatabase";
+    private static final String SECTION_FILE_STRING = "Section_File.txt"; //the file name for our section file
 
     //SUBPROGRAMS SUBPROGRAMS SUBPROGRAMS SUBPROGRAMS SUBPROGRAMS
     private static Connection getConnection() throws ClassNotFoundException, SQLException{
@@ -197,6 +198,12 @@ public class DatabaseAccessObject {
         }
 
     }
+    private void resetSections(){
+        File file = new File(SECTION_FILE_STRING);
+        if(file.exists()){
+            file.delete();
+        }
+    }
     private void destroyDB() throws ClassNotFoundException, SQLException{
         /**
          * Name : destroyDB
@@ -209,13 +216,13 @@ public class DatabaseAccessObject {
             File dbFile = new File(dbFileName);
             if(dbFile.delete()){
                 System.out.println("Old Database has been deleted.");
-                return;
+                resetSections();
             }
-            System.out.println("Could not delete database");
+
 
         }catch (Exception ex){
             ex.printStackTrace();
-
+            System.out.println("Could not delete database");
         }
     }
     private void initializeProfessorTable() throws IOException {
@@ -313,6 +320,7 @@ public class DatabaseAccessObject {
          * Notes :
          */
         wipeScheduleTable();
+        resetSections();
     }
     private void createDB() throws SQLException, ClassNotFoundException {
         /**
@@ -324,7 +332,6 @@ public class DatabaseAccessObject {
          */
 
         try {
-
             //create the tables for the database
             createTables();
             System.out.println("New database created.");
@@ -334,11 +341,11 @@ public class DatabaseAccessObject {
         }
 
     }
-    public void startUp() throws SQLException, ClassNotFoundException, IOException {
+    public boolean startUp() throws SQLException, ClassNotFoundException, IOException {
         /**
          * Name : startUp
          * Params : none.
-         * Returns : none.
+         * Returns : boolean - true -> prior existing db has been retained, false -> new db
          * Purpose : This method will run when the application is started. We want to check if the database exists,
          *           and if it does ask the user if they would like to delete the database and start fresh.
          * Notes :
@@ -355,11 +362,11 @@ public class DatabaseAccessObject {
             }
             if(strInput.equals("1")){
                 /* keep  database, so do nothing here and return */
-                return;
+                return true;
             }
             //reset the db and return from the function
             resetDB();
-            return;
+            return false;
         }
         /* if we make it our here we have no DB because it either never existed or it was destroyed.
             so let's create our database and initialize our 'static' tables
@@ -368,7 +375,7 @@ public class DatabaseAccessObject {
         initializeCourseTable();
         initializeClassroomTable();
         initializeProfessorTable();
-        return;
+        return false;
     }
     public void endSession() throws SQLException, ClassNotFoundException {
         /**
@@ -478,35 +485,7 @@ public class DatabaseAccessObject {
         connection.close();
         return blnAdded;
     }
-    private int getCourseSection(String strCourseName) throws SQLException, ClassNotFoundException {
-        /**
-         * Name : getCourseSection
-         * Params : strCourseName - the name of the course that we want to get the section for
-         * Returns : intNextSection - the next available section for the course.
-         * Purpose : the purpose of this method is to get the next available section for the given course. We will
-         *           first execute a sql query on the schedule table to find the max course section, increment it by
-         *           1 and return it.
-         */
-        Connection connection = getConnection();
-        Statement statement = connection.createStatement();
-        String strSQL = "SELECT MAX COURSE_SECTION FROM " + SCHEDULE_TABLE_STRING + " WHERE COURSE_NAME = '" +
-                strCourseName + "';";
-        int intNextSection = 1;
-        //now we want to try and execute our query
-        try{
-            ResultSet resultSet = statement.executeQuery(strSQL);
-            if(resultSet.next()){
-               intNextSection = resultSet.getInt("COURSE_SECTION") + 1;
-            }
-        }catch (Exception ex){
-            ex.printStackTrace();
-            intNextSection = -1;
-        }
 
-        statement.close();
-        connection.close();
-        return intNextSection;
-    }
     public objClassroom getFreeClassroom(String strStartTime, String strEndTime, String strDays) throws SQLException, ClassNotFoundException {
         /**
          * Name : getFreeClassroom

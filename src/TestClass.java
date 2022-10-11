@@ -521,6 +521,7 @@ public class TestClass {
          * Returns : boolean, true -> test passed, false -> test failed
          * Purpose : The Purpose of this test is to see if we can take in a file that will max out all time slots for 4
          *           credit courses, and try to schedule them all.
+         * Notes : this test has been deprecated since moving sections to a map.
          */
         System.out.println("STARTING SCHEDULE TEST 3 ...");
         DAO.endSession();
@@ -529,7 +530,7 @@ public class TestClass {
         FileInteractionObject fileInteractionObject = new FileInteractionObject();
         fileInteractionObject.instanciateBufferedReader("Test_Fill_Schedule_4_Cred.txt");
         SchedulerObject scheduler = new SchedulerObject(DAO, fileInteractionObject);
-        scheduler.scheduleAll(fileInteractionObject.readAllFileLine());
+        scheduler.scheduleAll(fileInteractionObject.readAllFileLine(), fileInteractionObject.getSectionMap());
         HashMap<String, ArrayList<objSchedule>> mapAllScheduled = DAO.getAllScheduled();
         for(Map.Entry<String, ArrayList<objSchedule>> e : mapAllScheduled.entrySet()){
             for(objSchedule s : e.getValue()){
@@ -543,6 +544,7 @@ public class TestClass {
          * Name : ScheduleTest4
          * Returns : boolean - true -> test passed, false -> test failed.
          * Purpose : The purpose of this test is to see if we can schedule both 4 and 3 credit courses at the same time.
+         * Notes : this test is deprecated since moving sections to a map
          */
         System.out.println("STARTING SCHEDULE TEST 4 ...");
         DAO.endSession();
@@ -551,7 +553,7 @@ public class TestClass {
             FileInteractionObject fileInteractionObject = new FileInteractionObject();
             fileInteractionObject.instanciateBufferedReader("Test_Fill_Three_And_Four_Cred.txt");
             SchedulerObject schedulerObject = new SchedulerObject(DAO, fileInteractionObject);
-            schedulerObject.scheduleAll(fileInteractionObject.readAllFileLine());
+            schedulerObject.scheduleAll(fileInteractionObject.readAllFileLine(), fileInteractionObject.getSectionMap());
         } catch (Exception ex){
             ex.printStackTrace();
             return false;
@@ -570,11 +572,12 @@ public class TestClass {
          * Returns : boolean - true -> test passed, false -> test failed
          * Purpose : The purpose of this class is to test scheduling 1 and 2 credit courses, we just read them in
          *           from a file and then try to schedule them all.
+         * Note : this test is deprecated since moving sections to a map
          */
         FileInteractionObject fileInteractionObject = new FileInteractionObject();
         fileInteractionObject.instanciateBufferedReader("Test_Schedule_1_2_Cred.txt");
         SchedulerObject schedulerObject = new SchedulerObject(DAO, fileInteractionObject);
-        schedulerObject.scheduleAll(fileInteractionObject.readAllFileLine());
+        schedulerObject.scheduleAll(fileInteractionObject.readAllFileLine(), fileInteractionObject.getSectionMap());
 
         return true;
     }
@@ -588,7 +591,7 @@ public class TestClass {
         System.out.println("SCHEDULE TEST 1 : " + ScheduleTest1());
         //System.out.println("SCHEDULE TEST 2 : " + ScheduleTest2());
 //        System.out.println("SCHEDULE TEST 3 : " + ScheduleTest3());
-        System.out.println("SCHEDULE TEST 4 : " + ScheduleTest4());
+        //System.out.println("SCHEDULE TEST 4 : " + ScheduleTest4());
         System.out.println("END SCHEDULE TESTS .....");
     }
 }

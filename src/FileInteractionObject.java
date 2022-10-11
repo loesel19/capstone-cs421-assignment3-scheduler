@@ -1,7 +1,4 @@
-import java.io.BufferedReader;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
 import java.nio.Buffer;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -21,6 +18,8 @@ public class FileInteractionObject {
 
 
     BufferedReader bufferedReader;
+    private static final String SECTION_FILE_STRING = "Section_File.txt";
+    private static final String COURSE_CATALOG_PATH_STRING = "Course_Catalog.txt";//the path of the course catalog we want to use
 
     public boolean instanciateBufferedReader(String strFilePath) throws FileNotFoundException {
         /**
@@ -30,6 +29,7 @@ public class FileInteractionObject {
          */
 
         try {
+
             bufferedReader = new BufferedReader(new FileReader(strFilePath));
             return true;
         } catch (Exception ex){
@@ -44,7 +44,8 @@ public class FileInteractionObject {
          * @Returns : none
          * @Purpose : The purpose of this method is to close the buffered reader object of this object
          */
-        this.bufferedReader.close();
+        if(!(bufferedReader == null))
+            this.bufferedReader.close();
     }
     public objFileData readFileLine() throws IOException {
         /**
@@ -66,6 +67,52 @@ public class FileInteractionObject {
         }
 
         return fileData;
+    }
+    public void writeOutSectionFile(HashMap<String, Integer> mapSections) throws IOException {
+        File file = new File(SECTION_FILE_STRING);
+        if(file.exists()){
+           file.delete();
+        }
+        file.createNewFile();
+        BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(file));
+        boolean blnFirst = true;
+        for(Map.Entry<String, Integer> e : mapSections.entrySet()){
+            if(blnFirst){
+                blnFirst = false;
+                bufferedWriter.write(e.getKey() + "\t" + e.getValue());
+                continue;
+            }
+            bufferedWriter.write("\n" + e.getKey() + "\t" + e.getValue());
+        }
+        bufferedWriter.flush();
+        bufferedWriter.close();
+        file = null;
+    }
+    private HashMap<String, Integer> readSectionsFromFile() throws IOException {
+        HashMap<String, Integer> mapSections = new HashMap<>();
+        BufferedReader br = new BufferedReader(new FileReader(SECTION_FILE_STRING));
+        String line;
+        while((line = br.readLine()) != null){
+            mapSections.put(line.split("\t")[0], Integer.parseInt(line.split("\t")[1]));
+        }
+        return mapSections;
+    }
+    public HashMap<String, Integer> getSectionMap() throws IOException {
+        File file = new File(SECTION_FILE_STRING);
+        HashMap<String, Integer> mapSection = new HashMap<>();
+        if(!file.exists()){
+            //add all of the courses with section 0 to the map
+            instanciateBufferedReader(COURSE_CATALOG_PATH_STRING);
+            ArrayList<objCourse> lstCourses = readAllCatalogedCourses();
+            for (objCourse c : lstCourses){
+                mapSection.put(c.getStrCourseID(), 0);
+            }
+            //now make buffered reader null
+            bufferedReader = null;
+            return mapSection;
+        }
+        //the file already existed, so we need to read in all the lines of that file, load our hashmap and return it. Create a method to do it
+        return readSectionsFromFile();
     }
     public ArrayList<objFileData> readAllFileLine() throws IOException {
         /**

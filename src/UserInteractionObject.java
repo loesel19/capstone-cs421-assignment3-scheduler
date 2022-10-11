@@ -1,6 +1,7 @@
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.sql.SQLException;
+import java.util.HashMap;
 import java.util.Locale;
 import java.util.Scanner;
 
@@ -17,6 +18,7 @@ public class UserInteractionObject {
     private DatabaseAccessObject databaseAccessObject; //the object that allows us to interact with our database
     private FileInteractionObject fileInteractionObject; //the object that allows us to read/write from files
     private SchedulerObject schedulerObject; //the object that handles schedule functionality
+    private HashMap<String, Integer> mapSections; //the map that will hold course sections
     //SUBPROGRAMS SUBPROGRAMS SUBPROGRAMS SUBPROGRAMS SUBPROGRAMS SUBPROGRAMS SUBPROGRAMS SUBPROGRAMS SUBPROGRAMS
     private void promptFilePath(){
         /**
@@ -33,11 +35,17 @@ public class UserInteractionObject {
          */
         databaseAccessObject = new DatabaseAccessObject();
         fileInteractionObject = new FileInteractionObject();
-        databaseAccessObject.startUp();
-        promptFilePath();
-        fileInteractionObject.instanciateBufferedReader(getInput());
         schedulerObject = new SchedulerObject(databaseAccessObject, fileInteractionObject);
-        schedulerObject.scheduleAll(fileInteractionObject.readAllFileLine());
+        if(!databaseAccessObject.startUp()){
+            /* being here means that we have a fresh database now, and need to ask the user for a file path to load */
+            this.mapSections = fileInteractionObject.getSectionMap();
+            //after loading sections lets promp for a file path
+            promptFilePath();
+            fileInteractionObject.instanciateBufferedReader(getInput());
+            this.mapSections = schedulerObject.scheduleAll(fileInteractionObject.readAllFileLine(), this.mapSections);
+        }
+        if(this.mapSections == null)
+            this.mapSections = fileInteractionObject.getSectionMap();
         middleFlow();
     }
     private void readInput(String strInput) throws IOException, SQLException, ClassNotFoundException {
@@ -60,9 +68,10 @@ public class UserInteractionObject {
             case "S":
                 promptFilePath();
                 fileInteractionObject.instanciateBufferedReader(getInput());
-                schedulerObject.scheduleAll(fileInteractionObject.readAllFileLine());
+                this.mapSections = schedulerObject.scheduleAll(fileInteractionObject.readAllFileLine(), this.mapSections);
                 break;
             case "X":
+                fileInteractionObject.writeOutSectionFile(this.mapSections);
                 endSession();
                 break;
             default:
@@ -130,9 +139,6 @@ public class UserInteractionObject {
          * @Returns : none
          * @Purpose :
          */
-        promptFilePath();
-        fileInteractionObject.instanciateBufferedReader(getInput());
-        schedulerObject.scheduleAll(fileInteractionObject.readAllFileLine());
         //now loop until user wishes to exit
         while(schedulerObject != null) {
             reportMenu();
