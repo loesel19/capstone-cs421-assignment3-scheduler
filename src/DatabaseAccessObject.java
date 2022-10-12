@@ -199,6 +199,13 @@ public class DatabaseAccessObject {
 
     }
     private void resetSections(){
+        /**
+         * @Name : resetSections
+         * @Params : none
+         * @Returns : none
+         * @Purpose : the purpose of this method is to reset our sections tied to courses, and to accomplish this we
+         *            barbarically delete the section file.
+         */
         File file = new File(SECTION_FILE_STRING);
         if(file.exists()){
             file.delete();
@@ -486,62 +493,17 @@ public class DatabaseAccessObject {
         return blnAdded;
     }
 
-    public objClassroom getFreeClassroom(String strStartTime, String strEndTime, String strDays) throws SQLException, ClassNotFoundException {
-        /**
-         * Name : getFreeClassroom
-         * Params : strStartTime - the startTime of the desired time slot
-         *          strEndTime - the end time of the desired slot
-         *          strDays - the days of the desired slot
-         * Returns : strClassroom - a string containing the classroom name of the free classroom if one is found. If
-         *                          none is found this is returned as "-1"
-         * Purpose : The purpose of this function is to search for a free classroom in the desired timeslot on the desired
-         *           days. A SQL query will be used, and if no results are found meeting the start time, end time and
-         *           days requirements we will return "-1"
-         */
-        Connection connection = getConnection();
-        Statement statement = connection.createStatement();
-        String strDaysStatement = getStrDaysStatement(strDays);
-        ArrayList<Integer> lstTakenTUIDS = new ArrayList<>(); //a list to hold the classroom tuids that are unavailable during this time.
-        String strSQL = "SELECT * FROM " + SCHEDULE_TABLE_STRING + " WHERE (Start_Time BETWEEN '" + strStartTime +
-                "' AND '" + strEndTime + "') OR (End_Time BETWEEN '" + strStartTime + "' AND '" + strEndTime + "') AND " +
-                strDaysStatement + " ORDER BY Classroom_TUID ASC";
-        try{
-            ResultSet resultSet = statement.executeQuery(strSQL);
-
-            while(resultSet.next()){
-                System.out.println(resultSet.getInt("Course_TUID"));
-                lstTakenTUIDS.add(resultSet.getInt("Classroom_TUID"));
-            }
-        } catch (Exception ex){
-            ex.printStackTrace();
-            return null;
-        }
-        //get all classrooms in a list
-        ArrayList<objClassroom> lstClassrooms = getAllClassrooms();
-        //see if the list of all classrooms is the same size as our list of taken classrooms for this time
-        if(lstClassrooms.size() == lstTakenTUIDS.size()){
-            return null;
-        }
-        //there is an open classroom, lets iterate through the tuids, which are sorted low to high, and find the classroom
-        //TODO : Ask Dr. James if the nested looping is less efficient than a single loop with a sql query here
-        objClassroom highestCapacityAvailableClassroom = null;
-        for(objClassroom c : lstClassrooms){
-            boolean blnTaken = false;
-            for(int i : lstTakenTUIDS){
-                if(i == c.getIntClassroomTUID()){
-                    blnTaken = true;
-                }
-            }
-            if(!blnTaken){
-                highestCapacityAvailableClassroom = c;
-                break;
-            }
-        }
-        statement.close();
-        connection.close();
-        return highestCapacityAvailableClassroom;
-    }
     public boolean addSchedule(objFileData fileData, int intClassroomTUID, int intNewSection) throws SQLException, ClassNotFoundException {
+        /**
+         * @Name : addSchedule
+         * @Params : fileData - an object that models the data read in from the schedule input file
+         *           intClassroomTUID - the TUID for the classroom we wish to schedule the course in
+         *           intNewSection - the section number for the course we will schedule.
+         * @Returns : blnAdded - a boolean that represents if the schedule table entry was added or not.
+         * @Purpose : the purpose of this method is to insert an entry into the schedule table. We grab a professor
+         *            and course object corresponding to the prof and course name in fileData and try to execute the sql
+         *            statement.
+         */
         boolean blnAdded = false;
         //get connection and sql statement objects
         Connection connection = getConnection();
@@ -601,73 +563,6 @@ public class DatabaseAccessObject {
         connection.close();
         return blnAdded;
     }
-    private String getStrDaysStatement(String strDays){
-        /**
-         * Name : getStrDaysStatement
-         * Params : strDays - the days we want to make a statement for
-         * Returns : strDaysStatement - the statement for the given days.
-         * Purpose : the purpose of this method is to make sure that we have a statement that would cover
-         *           just M,W,T,R as DAYS column data in our SCHEDULE_TABLE when we want to search for scheduled courses.
-         * Notes :
-         */
-        String strDaysStatement = "";
-        switch (strDays){
-            case "M":
-                strDaysStatement = "DAYS = 'M' OR 'MW'";
-                break;
-            case "T":
-                strDaysStatement = "DAYS = 'T' OR 'TR'";
-                break;
-            case "W":
-                strDaysStatement = "DAYS = 'W' OR 'MW'";
-                break;
-            case "R":
-                strDaysStatement = "DAYS = 'R' OR 'TR'";
-                break;
-            case "MW":
-                strDaysStatement = "DAYS = 'M' OR 'W' OR 'MW'";
-                break;
-            case "TR":
-                strDaysStatement = "DAYS = 'T' OR 'R' OR 'TR'";
-                break;
-            default:
-                strDaysStatement = "DAYS = '" + strDays + "'";
-                break;
-        }
-        return strDaysStatement;
-    }
-    public ArrayList<objSchedule> getScheduleDays(String strDays) throws SQLException, ClassNotFoundException {
-        /**
-         * Name : getSchedule
-         * Params : strDays - the days we will try to find a scheduled course on.
-         * Returns : lstSchedule - a list of objSchedule objects that will contain all scheduled courses on the given
-         *                         strDays.
-         * Purpose : The purpose of this method is to try to find scheduled courses on the given days and return an
-         *           ArrayList with all of these courses. If we do not find any an empty list is returned.
-         * Notes :
-         */
-        Connection connection = getConnection(); //our sql connection object
-        Statement statement = connection.createStatement(); //a sql statement object
-        String strSQL = "SELECT * FROM "+ SCHEDULE_TABLE_STRING + " WHERE " + getStrDaysStatement(strDays);
-        ArrayList<objSchedule> lstSchedule = new ArrayList<objSchedule>();
-        try{
-            ResultSet resultSet = statement.executeQuery(strSQL);
-            while(resultSet.next()){
-                objSchedule schedule = new objSchedule(resultSet.getInt("TUID"), resultSet.getInt("COURSE_TUID"),
-                        resultSet.getInt("COURSE_SECTION"), resultSet.getInt("CLASSROOM_TUID"),
-                        resultSet.getInt("PROFESSOR_TUID"), resultSet.getString("START_TIME"), resultSet.getString("END_TIME"),
-                        resultSet.getString("DAYS"));
-                lstSchedule.add(schedule);
-            }
-        } catch (Exception ex){
-            ex.printStackTrace();
-            return null;
-        }
-        //close db interaction objects
-        statement.close();
-        connection.close();
-        return lstSchedule;
-    }
     public ArrayList<objClassroom> getAllClassrooms() throws SQLException, ClassNotFoundException {
         /**
          * Name : getAllClassrooms
@@ -692,36 +587,6 @@ public class DatabaseAccessObject {
         statement.close();
         connection.close();
         return lstClassrooms;
-    }
-    public objSchedule getOneScheduledCourse(String strStartTime, String strEndTime, String strDays) throws SQLException, ClassNotFoundException {
-        /**
-         * Name : getOneScheduledCourse
-         * Params : strStartTime - the startTime of the period that we want to search for a course in.
-         *          strEndTime - the end time of the period that we want to search for a course in.
-         *          strDays - the days that we want to search for a scheduled course during.
-         * Returns : schedule - an objSchedule object with data for a SCHEDULE_TABLE entry, we will return null
-         *                      if we do not find an entry in our time period.
-         * Purpose : the purpose of this method is to try to get a single scheduled course during our given time
-         *           slot on the given days.
-         * Notes :
-         */
-        ArrayList<objSchedule> lstSchedule = getScheduleDays(strDays); //an arraylist with all scheduled courses on the given days
-        //first return null if we do not have a course on these day(s)
-        if(lstSchedule == null || lstSchedule.size() == 0){
-            return null;
-        }
-        //loop through each objSchedule in lstSchedule
-        for(objSchedule s : lstSchedule){
-            LocalTime localTime = LocalTime.parse(strStartTime);
-            if(localTime.isAfter(LocalTime.parse(s.getStrStartTime())) && localTime.isBefore(LocalTime.parse(s.getStrEndTime()))){
-                return s;
-            }
-            localTime = LocalTime.parse(strEndTime);
-            if(localTime.isAfter(LocalTime.parse(s.getStrStartTime())) && localTime.isBefore(LocalTime.parse(s.getStrEndTime()))){
-                return s;
-            }
-        }
-        return null;
     }
     public ArrayList<objSchedule> readAllScheduled() throws SQLException, ClassNotFoundException {
         /**
@@ -850,86 +715,13 @@ public class DatabaseAccessObject {
         connection.close();
         return professor;
     }
-    public HashMap<String, ArrayList<objSchedule>> getAllScheduled() throws SQLException, ClassNotFoundException {
-        /**
-         * Name : getAllScheduled
-         * Params : strDays
-         * Returns : mapSchedule - a hashMap where keys are days and values are an arraylist of all scheduled courses on that day.
-         * Purpose : The purpose of this method is to get a hashmap with all scheduled classes on each day
-         */
-        HashMap<String, ArrayList<objSchedule>> mapSchedule = new HashMap<>(); // our container
-        //get connection and statement objects
-        Connection connection = getConnection();
-        Statement statement = connection.createStatement();
-        ResultSet resultSet = null; //the resultset of our sql queries
-        //first lets get all classes on monday
-        String strDay = "M";
-        String strSQL;
-        ArrayList<objSchedule> lstSchedule;
-        try{
-            while(!strDay.equals("-1")){
-                strSQL = "SELECT * FROM " + SCHEDULE_TABLE_STRING + " WHERE Days LIKE \"%"+ strDay + "%\";";
-                lstSchedule = new ArrayList<>();
-                resultSet = statement.executeQuery(strSQL);
-                while(resultSet.next()){
-                    objSchedule schedule = new objSchedule(resultSet.getInt("TUID"), resultSet.getInt("Course_TUID"),
-                            resultSet.getInt("Course_Section"), resultSet.getInt("Classroom_TUID"),
-                            resultSet.getInt("Professor_TUID"), resultSet.getString("Start_Time"),
-                            resultSet.getString("End_Time"), strDay);
-                    lstSchedule.add(schedule);
-                }
-                //now we add an entry to our hashmap
-                mapSchedule.put(strDay, lstSchedule);
-                strDay = changeDay(strDay);
-            }
-        } catch(Exception ex){
-            ex.printStackTrace();
-        }
-        statement.close();
-        connection.close();
-        return mapSchedule;
-    }
-    private String changeDay(String strDay){
-        switch (strDay){
-            case "M":
-                return "T";
-            case "T":
-                return "W";
-            case "W":
-                return "R";
-            case "R":
-                return "F";
-            default:
-                return "-1";
-        }
-    }
-
-    public int getNewCourseSection(int Course_TUID) throws SQLException, ClassNotFoundException {
-        /**
-         * Name : getNewCourseSection
-         * Params : Course_TUID - the tuid for the course we want to get a new section for
-         * Returns :
-         * Purpose :
-         */
-        Connection connection = getConnection();
-        Statement statement = connection.createStatement();
-        int intNewSection = 0;
-        String strSQL = "SELECT MAX(Course_Section) FROM " + SCHEDULE_TABLE_STRING + " WHERE Course_TUID = " + Course_TUID + ";";
-        try {
-            ResultSet resultSet = statement.executeQuery(strSQL);
-            if(!resultSet.next())
-                intNewSection = 1;
-            intNewSection = resultSet.getInt(1) + 1;
-        }catch (Exception ex){
-            intNewSection = -1;
-        }
-        statement.close();
-        connection.close();
-        return intNewSection;
-    }
     private String reportSQLString(String strWhereClause){
         /**
-         *
+         * @Name : reportSQLString
+         * @Params : strWhereClause - this is the where part of the sql statement we are going to execute
+         * @Returns : a string containing the sql statement we want to execute against the database.
+         * @Purpose : the purpose of this method is to act as a somewhat modular sql statement generator for the
+         *            reports that we want to generate.
          */
         return "SELECT SCHEDULE_TABLE.TUID, PROFESSOR_NAME, CLASSROOM_NAME, CAPACITY, COURSE_ID, COURSE_SECTION, " +
                 "SCHEDULE_TABLE.START_TIME, SCHEDULE_TABLE.END_TIME, SCHEDULE_TABLE.DAYS " +
@@ -969,6 +761,66 @@ public class DatabaseAccessObject {
             lstPartial = null;
         }
         return new objSchedulingTuple(lstPartial, lstAlreadySeenTUIDS);
+    }
+    private String changeDay(String strDay){
+        /**
+         * @Name : changeDay
+         * @Params : strDay - the day that needs to be changed
+         * @Returns : a string representing the changed day. or -1 if strDay was F
+         * @Purpose : the purpose of this method is to take a day as a parameter and return the next weekday or -1 if
+         *            F was passed in.
+         */
+        switch (strDay){
+            case "M":
+                return "T";
+            case "T":
+                return "W";
+            case "W":
+                return "R";
+            case "R":
+                return "F";
+            default:
+                return "-1";
+        }
+    }
+    public HashMap<String, ArrayList<objSchedule>> getAllScheduled() throws SQLException, ClassNotFoundException {
+        /**
+         * Name : getAllScheduled
+         * Params : strDays
+         * Returns : mapSchedule - a hashMap where keys are days and values are an arraylist of all scheduled courses on that day.
+         * Purpose : The purpose of this method is to get a hashmap with all scheduled classes on each day
+         */
+        HashMap<String, ArrayList<objSchedule>> mapSchedule = new HashMap<>(); // our container
+        //get connection and statement objects
+        Connection connection = getConnection();
+        Statement statement = connection.createStatement();
+        ResultSet resultSet = null; //the resultset of our sql queries
+        //first lets get all classes on monday
+        String strDay = "M";
+        String strSQL;
+        ArrayList<objSchedule> lstSchedule;
+        try{
+            while(!strDay.equals("-1")){
+                strSQL = "SELECT * FROM " + SCHEDULE_TABLE_STRING + " WHERE Days LIKE \"%"+ strDay + "%\";";
+                lstSchedule = new ArrayList<>();
+                resultSet = statement.executeQuery(strSQL);
+                while(resultSet.next()){
+                    objSchedule schedule = new objSchedule(resultSet.getInt("TUID"), resultSet.getInt("Course_TUID"),
+                            resultSet.getInt("Course_Section"), resultSet.getInt("Classroom_TUID"),
+                            resultSet.getInt("Professor_TUID"), resultSet.getString("Start_Time"),
+                            resultSet.getString("End_Time"), strDay);
+                    lstSchedule.add(schedule);
+                }
+                //now we add an entry to our hashmap
+                mapSchedule.put(strDay, lstSchedule);
+                strDay = changeDay(strDay);
+            }
+        } catch(Exception ex){
+            ex.printStackTrace();
+        }
+        statement.close();
+        connection.close();
+        return mapSchedule;
     }
     public ArrayList<objReport> getScheduledCoursesByDayTime() throws SQLException, ClassNotFoundException {
         /**
@@ -1015,12 +867,14 @@ public class DatabaseAccessObject {
         /**
          * @Name : getScheduledCoursesByProfessor
          * @Params : none
-         * @Returns :
-         * @Purpose :
+         * @Returns : ArrayList<objReport> - an arraylist of report data model objects that are in order by professor
+         * @Purpose : this method returns a list representation of all scheduled course section ordered by professor
+         *            alphabetically.
          */
 
         Connection connection = getConnection();
         Statement statement = connection.createStatement();
+        //add where clause to our sql report string
         String strSQL = reportSQLString("ORDER BY Professor_Name,Course_ID, Course_Section, DAYS, start_time");
         objSchedulingTuple tuple = getPartialDayTimeList(statement, new ArrayList<Integer>(), strSQL);
         statement.close();
@@ -1031,11 +885,12 @@ public class DatabaseAccessObject {
         /**
          * @Name : getScheduledCoursesByCourse
          * @Params : none
-         * @Returns :
-         * @Purpose :
+         * @Returns : ArrayList<objReport> - an arraylist of report data model objects that are in order by professor
+         * @Purpose : This method will create a list of scheduled courses ordered by course names.
          */
         Connection connection = getConnection();
         Statement statement = connection.createStatement();
+        //add the where clause to our sql report string
         String strSQL = reportSQLString("ORDER BY Course_ID, Course_Section, DAYS, start_time");
         objSchedulingTuple tuple = getPartialDayTimeList(statement, new ArrayList<Integer>(), strSQL);
         statement.close();

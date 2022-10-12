@@ -27,11 +27,18 @@ public class UserInteractionObject {
          * @Returns : a string containing the path to the file we want to read in.
          * @Purpose : the purpose of this method is to get the file path containing the courses we want to schedule.
          */
-        System.out.println("Input the name of the file you would like to schedule");
+        System.out.println("Input the path to the file you would like to schedule");
     }
     public void startUp() throws SQLException, IOException, ClassNotFoundException {
         /**
-         *
+         * @Name : startUp
+         * @Params : none
+         * @Returns : none
+         * @Purpose : this method will handle the flow of user interaction for the program. We first make our
+         *            databaseAccessObject, fileInteractionObject and schedulerObject. we then startUp our
+         *            databaseAccessObject, and catch what that startup method returns. If dao.startUp returns false
+         *            we have an empty schedule and need to prompt for a file path. We then instantiate mapSections,
+         *            and progress to the middleFlow of the program.
          */
         databaseAccessObject = new DatabaseAccessObject();
         fileInteractionObject = new FileInteractionObject();
@@ -39,9 +46,12 @@ public class UserInteractionObject {
         if(!databaseAccessObject.startUp()){
             /* being here means that we have a fresh database now, and need to ask the user for a file path to load */
             this.mapSections = fileInteractionObject.getSectionMap();
-            //after loading sections lets promp for a file path
+            //after loading sections lets prompt for a file path until we get a good file name
             promptFilePath();
-            fileInteractionObject.instanciateBufferedReader(getInput());
+            while (!fileInteractionObject.instanciateBufferedReader(getInput())){
+                System.out.println("File path given did not yield a readable file.");
+                promptFilePath();
+            }
             this.mapSections = schedulerObject.scheduleAll(fileInteractionObject.readAllFileLine(), this.mapSections);
         }
         if(this.mapSections == null)
@@ -53,7 +63,8 @@ public class UserInteractionObject {
          * @Name : readInput
          * @Params : strInput - the string that will determine the action the method takes.
          * @Returns : none
-         * @Purpose :
+         * @Purpose : The purpose of this method is to see if strInput matches one our menu inputs we take the appropriate
+         *            action, if not we just break
          */
         switch (strInput){
             case "D":
@@ -66,11 +77,15 @@ public class UserInteractionObject {
                 schedulerObject.printReportCourse();
                 break;
             case "S":
+                //we want to read a new file in
                 promptFilePath();
-                fileInteractionObject.instanciateBufferedReader(getInput());
-                this.mapSections = schedulerObject.scheduleAll(fileInteractionObject.readAllFileLine(), this.mapSections);
+                if(fileInteractionObject.instanciateBufferedReader(getInput()))
+                    this.mapSections = schedulerObject.scheduleAll(fileInteractionObject.readAllFileLine(), this.mapSections);
+                else
+                    System.out.println("Could not find the specified file.");
                 break;
             case "X":
+                //we want to close the program. First write out our section file then call endSession.
                 fileInteractionObject.writeOutSectionFile(this.mapSections);
                 endSession();
                 break;
@@ -80,10 +95,10 @@ public class UserInteractionObject {
     }
     private void reportMenu(){
         /**
-         * @Name : viewReporst
+         * @Name : reportMenu
          * @Params : none
          * @Returns : none
-         * @Purpose :
+         * @Purpose : The purpose of this method is to print out a report menu for the user.
          */
         System.out.println("Press 'D' to see current schedule by Day/Time.");
         System.out.println("Press 'P' to see current schedule by Professor.");
@@ -96,7 +111,7 @@ public class UserInteractionObject {
          * @Name : newFileMenu
          * @Params : none
          * @Returns : none
-         * @Purpose :
+         * @Purpose : The purpose of this method is to print the input prompt for a new schedule file
          */
         System.out.println("Input 'S' to schedule another file.");
     }
@@ -105,7 +120,7 @@ public class UserInteractionObject {
          * @Name : promptQuit
          * @Params : none
          * @Returns : none
-         * @Purpose :
+         * @Purpose : the purpose of this method is to prompt the input command to close the application
          */
         System.out.println("Press 'X' to close the application.");
     }
@@ -114,7 +129,9 @@ public class UserInteractionObject {
          * @Name : endSession
          * @Params :
          * @Returns :
-         * @Purpose :
+         * @Purpose : the purpose of this method is to control how the program will run when the session is ending.
+         *            We close out the interaction objects and point our objects to null for cleanup up. We call the
+         *            dao.endSession method to handle how the database will shut down.
          */
         schedulerObject = null;
         fileInteractionObject.closeBufferedReader();
@@ -137,7 +154,8 @@ public class UserInteractionObject {
          * @Name : middleFlow
          * @Params : none
          * @Returns : none
-         * @Purpose :
+         * @Purpose : the purpose of this method is to control how the program runs in the interim. We continually
+         *            print the menu to the user until they wish to exit and schedulerObject is pointed to null.
          */
         //now loop until user wishes to exit
         while(schedulerObject != null) {

@@ -1,11 +1,11 @@
 public class objReport {
     /**
-     * File Name : objProfessor
+     * File Name : objReport
      * File Author : Andrew A. Loesel
      * Part of Project : CS 421 Assignment 3 - class scheduler
      * Organization : Saginaw Valley State University
      * Professor : Scott D. James
-     * File Purpose : This class is going to be an object that models the data of a professor entry in our database.
+     * File Purpose : This class is going to be an object that models the data for a single entry in our schedule reports
      */
     private int intTUID;
     private String strCourseName;

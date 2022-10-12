@@ -53,37 +53,6 @@ public class SchedulerObject {
         this.fileInteractionObject = fileInteractionObject;
     }
 
-//    private String changeDays(String strDays){
-//        /**
-//         * Name : changeDays
-//         * Params : strDays - the current days we are trying to schedule on
-//         * Returns : strNewDays - the new days we will try to schedule on.
-//         * Purpose : The purpose of this function is to go through every possible day(s) and switch it to the next day(s)
-//         */
-//        String strNewDays = "";
-//        switch(strDays){
-//            case "M":
-//                strNewDays = "T";
-//                break;
-//            case "T":
-//                strNewDays = "W";
-//                break;
-//            case "W":
-//                strNewDays = "R";
-//                break;
-//            case "R":
-//            case "TR":
-//                strNewDays = "F";
-//                break;
-//            case "MR" :
-//                strNewDays = "TR";
-//                break;
-//            default:
-//                strNewDays = "-1";
-//                break;
-//        }
-//        return strNewDays;
-//    }
     private String[] getDaysSeparate(String strDays){
         /**
          * Name : getDaysSeparate
@@ -192,37 +161,6 @@ public class SchedulerObject {
         }
         return strNewDays;
     }
-    private int getClassroomTUID(int intAlreadyScheduledCourses) throws SQLException, ClassNotFoundException {
-        /**
-         * Name : getClassroomTUID
-         * Params : intAlreadyScheduledCourses - the number of courses already scheduled in this time slot.
-         * Returns : intClassroomTUID - the TUID of the classroom we will schedule our course in next
-         * Purpose : The purpose of this method is to get the next classroom to put a course in based on how
-         *           many courses are already scheduled. We choose the next classroom based on the order of
-         *           'A' first then 'B' then 'C'.
-         */
-        ArrayList<objClassroom> lstRooms = databaseAccessObject.getAllClassrooms();
-        int intClassroomTUID = -1;
-        String strClassroomNameNeeded = "";
-        if (intAlreadyScheduledCourses == 0){
-            strClassroomNameNeeded = "A";
-        }
-        if(intAlreadyScheduledCourses == 1){
-            strClassroomNameNeeded = "B";
-        }
-        if(intAlreadyScheduledCourses == 2){
-            strClassroomNameNeeded = "C";
-        }
-
-
-        for(objClassroom c : lstRooms){
-            if(c.getStrClassroomName().equals(strClassroomNameNeeded)){
-                intClassroomTUID = c.getIntClassroomTUID();
-                break;
-            }
-        }
-        return intClassroomTUID;
-    }
     private void insertSchedule(objFileData fileData, int intClassroomTUID, int intNewSection) throws SQLException, ClassNotFoundException {
         /**
          * Name : insertSchedule
@@ -290,6 +228,8 @@ public class SchedulerObject {
             boolean blnA = true;
             boolean blnB = true;
             boolean blnC = true;
+            /* we want to loop through the list of taken classrooms at this time slot and we flip the boolean to false if it
+            is part of the list */
             for(int tuid : lstClassroomTUIDS){
                 if(tuid == 1)
                     blnA = false;
@@ -298,6 +238,7 @@ public class SchedulerObject {
                 if(tuid == 3)
                     blnC = false;
             }
+            //now we first check c, then b, then a booleans. We do it in this order because the last one checked is the largest
             if (blnC)
                 intLargestAvailableRoomTUID = 3;
             if(blnB)
@@ -328,6 +269,7 @@ public class SchedulerObject {
          *           schedule this course, and return true if scheduled. If course not scheduled we increment start time and
          *           end time by lngHours and Minutes.
          */
+        //loop through until the courses endtime is after the specified lasttime, try to schedule the course on each iteration
         while(newEndTime.isBefore(firstTimeWhile) || newEndTime.equals(secondTimeWhile)){
             ArrayList<Integer> lstScheduledClassroomTUIDS = getScheduledCoursesInTime(fileData.getStrDays(), newStartTime, newEndTime);
             fileData.setStrStartTime(newStartTime.toString());
@@ -359,6 +301,7 @@ public class SchedulerObject {
          *           schedule the course that fileData represents until the newEndTime is after the lastTime(which will be last
          *           end time on friday.).
          */
+        //loop through until the courses endtime is after the specified lasttime, try to schedule the course on each iteration
         while(newEndTime.isBefore(lastTime) || newEndTime.equals(lastTime)){
             ArrayList<Integer> lstScheduledClassroomTUIDS = getScheduledCoursesInTime(fileData.getStrDays(), newStartTime, newEndTime);
             fileData.setStrStartTime(newStartTime.toString());
@@ -385,6 +328,7 @@ public class SchedulerObject {
          *           we first try to schedule this course by calling the try schedule function. If we cannot schedule
          *           we will increment the time by an hour.
          */
+        //loop through until the courses endtime is after the specified lasttime, try to schedule the course on each iteration
         while(!courseEndTime.isAfter(lastTime)){
             ArrayList<Integer> lstScheduledClassroomTUIDS = getScheduledCoursesInTime(fileData.getStrDays(), courseStartTime, courseEndTime);
             fileData.setStrStartTime(courseStartTime.toString());
@@ -417,8 +361,92 @@ public class SchedulerObject {
                 return "-1";
         }
     }
+    private boolean ThreeOrFourCredAlgorithm(objFileData fileData, objCourse course, LocalTime timeOriginalStart, LocalTime timeOriginalEnd,
+                                             String strOriginalDays, int intNewCourseSection, long lngBlockTimeHours, long lngMinutes) throws SQLException, ClassNotFoundException {
+        /**
+         * @Name : ThreeOrFourCredAlgorithm
+         * @Params : fileData - a file data model object that has data needed to schedule the course
+         *           course - the course that we are scheduling a section for
+         *           timeOriginalStart - the original start time for this section
+         *           timeOriginalEnd - the original end time for this section
+         *           strOriginalDays - the original days for this section
+         *           intNewCourseSection - the number for this new section
+         *           lngBlockTimeHours - the hours of the 2 day split class
+         *           lngMinutes - the minutes for the 2 day split class
+         * @Returns : boolean - true -> scheduled this section, false -> couldn't schedule section
+         * @Purpose : the purpose of this method is to execute the algorithmic approach to scheduling a course. The parts
+         *            of the algorithm are labeled in inline code.
+         */
+        //part one : try to schedule on desired days/ times
+        /* lstScheduleClassroomTUIDS will frequently be assigned an arrayList of course tuids that are scheduled in the current
+           time block on the current days that we are trying to schedule the new course for.
+         */
+        fileData.setStrStartTime(timeOriginalStart.toString());
+        fileData.setStrEndTime(timeOriginalEnd.toString());
+        ArrayList lstScheduledClassroomTUIDS = getScheduledCoursesInTime(strOriginalDays, timeOriginalStart, timeOriginalEnd);
+        if (trySchedule(fileData, lstScheduledClassroomTUIDS, intNewCourseSection))
+            return true;
 
-    private HashMap<String, Integer> scheduleFourOrThreeCredit(objFileData fileData, HashMap<String, Integer> mapSections) throws SQLException, ClassNotFoundException {
+        //part two : switch days and try to schedule
+        fileData.setStrDays(switchToAdjacentDays(strOriginalDays));
+        lstScheduledClassroomTUIDS = getScheduledCoursesInTime(fileData.getStrDays(), timeOriginalStart, timeOriginalEnd);
+        if (trySchedule(fileData, lstScheduledClassroomTUIDS, intNewCourseSection))
+            return true;
+
+        //part three : switch to original days and try to schedule until we reach the end of the day.
+        fileData.setStrDays(strOriginalDays);
+        /* we will need to get new start and end times and set them to hours/2 + remaining minutes to schedule in the immediate
+           next time slot on the original days */
+        LocalTime newStartTime = timeOriginalStart.plus((lngBlockTimeHours / 2), ChronoUnit.HOURS);
+        LocalTime newEndTime = timeOriginalEnd.plus((lngBlockTimeHours / 2), ChronoUnit.HOURS);
+        //get last time for 3 or 4 credit class depending on how many credit hours this course is
+        LocalTime lastTime = LAST_SCHEDULE_TIME_MR_4And3Cred;
+        if (loopTrySchedule(newStartTime, newEndTime, lastTime, lastTime, intNewCourseSection, lngBlockTimeHours, lngMinutes, fileData))
+            return true;
+        //part four : try the rest of the slots starting from the first one on the adjacent days, but we eed to skip the original time slot
+        //try before original time slot
+        if (course.getIntCreditHours() == 3)
+            newStartTime = FIRST_SCHEDULE_TIME_MR_3Cred;
+        else
+            newStartTime = FIRST_SCHEDULE_TIME_MR_4Cred;
+
+        newEndTime = newStartTime.plus((lngBlockTimeHours / 2), ChronoUnit.HOURS);
+        if (loopTrySchedule(newStartTime, newEndTime, timeOriginalStart, timeOriginalStart, intNewCourseSection, lngBlockTimeHours, lngMinutes, fileData))
+            return true;
+
+        //now try all time slots after original start time.
+        fileData.setStrDays(switchToAdjacentDays(strOriginalDays));
+        newStartTime = timeOriginalStart.plus((lngBlockTimeHours / 2), ChronoUnit.HOURS);
+        newEndTime = timeOriginalEnd.plus((lngBlockTimeHours / 2), ChronoUnit.HOURS);
+        if (loopTrySchedule(newStartTime, newEndTime, lastTime, lastTime, intNewCourseSection, lngBlockTimeHours, lngMinutes, fileData))
+            return true;
+
+        //part five : try all times before the original times on the original days
+        fileData.setStrDays(strOriginalDays);
+        if (course.getIntCreditHours() == 3)
+            newStartTime = FIRST_SCHEDULE_TIME_MR_3Cred;
+        else
+            newStartTime = FIRST_SCHEDULE_TIME_MR_4Cred;
+        newEndTime = newStartTime.plus((lngBlockTimeHours / 2), ChronoUnit.HOURS);
+        if (loopTrySchedule(newStartTime, newEndTime, timeOriginalStart, timeOriginalEnd, intNewCourseSection, lngBlockTimeHours, lngMinutes, fileData))
+            return true;
+        //part six : try fridays
+        //since Friday classes are twice as long we have to watch how we increment
+        fileData.setStrDays("F");
+        if (course.getIntCreditHours() == 3) {
+            newStartTime = FIRST_SCHEDULE_TIME_MR_3Cred;
+            lastTime = LAST_SCHEDULE_TIME_F;
+        } else {
+            newStartTime = FIRST_SCHEDULE_TIME_MR_4Cred;
+            lastTime = LAST_SCHEDULE_TIME_MR_4And3Cred;
+        }
+        newEndTime = newStartTime.plus(lngBlockTimeHours, ChronoUnit.HOURS);
+        if (loopTryScheduleFriday(newStartTime, newEndTime, lastTime, intNewCourseSection, fileData))
+            return true;
+        return false;
+    }
+    private HashMap<String, Integer> scheduleFourOrThreeCredit(objFileData fileData, HashMap<String, Integer> mapSections)
+            throws SQLException, ClassNotFoundException {
         /**
          * Name : scheduleFourCredit
          * Params : fileData - an object containing the data for the course we want to schedule from our input file
@@ -445,93 +473,13 @@ public class SchedulerObject {
         objCourse course = databaseAccessObject.getCourse(fileData.getStrCourseName()); //the course we are trying to schedule
         int intNewCourseSection = mapSections.get(course.getStrCourseID()); //get the incremented section from the map
         long lngBlockTimeHours = course.getIntCreditHours(); //the hours we need for our 2 day class periods
-        long lngMinutes = (long) ((((double) course.getIntCreditHours() / 2.0) * 60) % 60);
-         /* this equation is used to put
+        /* this equation is used to put
          any minutes we have remaining after a course time is cut in half for split classes into a variable to add to
          a LocalTime when we loop through slots. It will come in handy for 3 credit hour courses. */
-
-        //part one : try to schedule on desired days/ times
-        /* lstScheduledTUIDS will frequently be assigned an arrayList of course tuids that are scheduled in the current
-           time block on the current days that we are trying to schedule the new course for.
-         */
-        fileData.setStrStartTime(timeOriginalStart.toString());
-        fileData.setStrEndTime(timeOriginalEnd.toString());
-        ArrayList lstScheduledClassroomTUIDS = getScheduledCoursesInTime(strOriginalDays, timeOriginalStart, timeOriginalEnd);
-        if (trySchedule(fileData, lstScheduledClassroomTUIDS, intNewCourseSection))
+        long lngMinutes = (long) ((((double) course.getIntCreditHours() / 2.0) * 60) % 60);
+        //call our method to handle the scheduling algorithm
+        if(ThreeOrFourCredAlgorithm(fileData, course, timeOriginalStart, timeOriginalEnd, strOriginalDays, intNewCourseSection, lngBlockTimeHours, lngMinutes))
             return mapSections;
-
-        //part two : switch days and try to schedule
-
-        fileData.setStrDays(switchToAdjacentDays(strOriginalDays));
-        lstScheduledClassroomTUIDS = getScheduledCoursesInTime(fileData.getStrDays(), timeOriginalStart, timeOriginalEnd);
-        if (trySchedule(fileData, lstScheduledClassroomTUIDS, intNewCourseSection))
-            return mapSections;
-
-        //part three : switch to original days and try to schedule until we reach the end of the day.
-
-        fileData.setStrDays(strOriginalDays);
-        /* we will need to get new start and end times and set them to hours/2 + remaining minutes to schedule in the immediate
-           next time slot on the original days */
-        LocalTime newStartTime = timeOriginalStart.plus((lngBlockTimeHours / 2), ChronoUnit.HOURS);
-        LocalTime newEndTime = timeOriginalEnd.plus((lngBlockTimeHours / 2), ChronoUnit.HOURS);
-        //we also need to add minutes in.
-       // newStartTime = newStartTime.plus(lngMinutes, ChronoUnit.MINUTES);
-       // newEndTime = newEndTime.plus(lngMinutes, ChronoUnit.MINUTES);
-        //get last time for 3 or 4 credit class depending on how many credit hours this course is
-        LocalTime lastTime = LAST_SCHEDULE_TIME_MR_4And3Cred;
-
-        if (loopTrySchedule(newStartTime, newEndTime, lastTime, lastTime, intNewCourseSection, lngBlockTimeHours, lngMinutes, fileData))
-            return mapSections;
-
-        //part four : try the rest of the slots starting from the first one on the adjacent days, but we eed to skip the original time slot
-        //try before original time slot
-        if (course.getIntCreditHours() == 3)
-            newStartTime = FIRST_SCHEDULE_TIME_MR_3Cred;
-        else
-            newStartTime = FIRST_SCHEDULE_TIME_MR_4Cred;
-
-        newEndTime = newStartTime.plus((lngBlockTimeHours / 2), ChronoUnit.HOURS);
-      //  newEndTime = newEndTime.plus(lngMinutes, ChronoUnit.MINUTES);
-        if (loopTrySchedule(newStartTime, newEndTime, timeOriginalStart, timeOriginalStart, intNewCourseSection, lngBlockTimeHours, lngMinutes, fileData))
-            return mapSections;
-
-        //now try all time slots after original start time.
-        fileData.setStrDays(switchToAdjacentDays(strOriginalDays));
-        newStartTime = timeOriginalStart.plus((lngBlockTimeHours / 2), ChronoUnit.HOURS);
-        newEndTime = timeOriginalEnd.plus((lngBlockTimeHours / 2), ChronoUnit.HOURS);
-        //don't forget to add the minutes in
-     //   newStartTime = newStartTime.plus(lngMinutes, ChronoUnit.MINUTES);
-      //  newEndTime = newEndTime.plus(lngMinutes, ChronoUnit.MINUTES);
-        if (loopTrySchedule(newStartTime, newEndTime, lastTime, lastTime, intNewCourseSection, lngBlockTimeHours, lngMinutes, fileData))
-            return mapSections;
-
-        //part five : try all times before the original times on the original days
-        fileData.setStrDays(strOriginalDays);
-        if (course.getIntCreditHours() == 3)
-            newStartTime = FIRST_SCHEDULE_TIME_MR_3Cred;
-        else
-            newStartTime = FIRST_SCHEDULE_TIME_MR_4Cred;
-
-        newEndTime = newStartTime.plus((lngBlockTimeHours / 2), ChronoUnit.HOURS);
-       // newEndTime = newEndTime.plus(lngMinutes, ChronoUnit.MINUTES);
-        if (loopTrySchedule(newStartTime, newEndTime, timeOriginalStart, timeOriginalEnd, intNewCourseSection, lngBlockTimeHours, lngMinutes, fileData))
-            return mapSections;
-
-        //part six : try fridays
-        //since Friday classes are twice as long we have to watch how we increment
-        fileData.setStrDays("F");
-        if (course.getIntCreditHours() == 3) {
-            newStartTime = FIRST_SCHEDULE_TIME_MR_3Cred;
-            lastTime = LAST_SCHEDULE_TIME_F;
-        } else {
-            newStartTime = FIRST_SCHEDULE_TIME_MR_4Cred;
-            lastTime = LAST_SCHEDULE_TIME_MR_4And3Cred;
-        }
-        newEndTime = newStartTime.plus(lngBlockTimeHours, ChronoUnit.HOURS);
-      //  newEndTime = newEndTime.plus(lngMinutes, ChronoUnit.MINUTES);
-        if (loopTryScheduleFriday(newStartTime, newEndTime, lastTime, intNewCourseSection, fileData))
-            return mapSections;
-
         //we could not schedule the course, so we need to print out that it was not scheduled
         fileData.setStrDays(strOriginalDays);
         fileData.setStrStartTime(timeOriginalStart.toString());
@@ -604,11 +552,15 @@ public class SchedulerObject {
         return mapSections;
     }
     public HashMap<String, Integer> Schedule(objFileData fileData, HashMap<String, Integer> mapSections) throws SQLException, ClassNotFoundException {
-
-
+        /**
+         * @Name : Schedule
+         * @Params : fileData - the file data object model for the course we want to schedule
+         *           mapSections - a hashmap that has key value pairs of course, current section number.
+         * @Returns : mapSections - a hashmap that has key value pairs of course, current section number.
+         * @Purpose : The purpose of this method is to send the filedata that we are trying to schedule to the proper
+         *            scheduling method based off of credit hours
+         */
         objCourse course = databaseAccessObject.getCourse(fileData.getStrCourseName());
-
-
             switch (course.getIntCreditHours()){
                 case 1:
                 case 2:
@@ -624,24 +576,45 @@ public class SchedulerObject {
     }
 
     public HashMap<String, Integer> scheduleAll(ArrayList<objFileData> lstFileData, HashMap<String, Integer> mapSections) throws SQLException, ClassNotFoundException {
+        /**
+         * @Name : scheduleAll
+         * @Params : lstFileData - a list of file data object models representing all course sections we want to schedule
+         *           mapSections - a hashmap with key value pairs of course name, current section number.
+         * @Returns : mapSections - a hashmap with key value pairs of course name, current section number.
+         * @Purpose : the purpose of this method is to try to schedule every single fileData object in lstFileData and
+         *            then return mapSections so that this objects controlling class.
+         */
         for(objFileData d : lstFileData){
             //try to schedule the course.
             mapSections = Schedule(d, mapSections);
         }
         return mapSections;
     }
+    private void printHeaders(){
+        /**
+         * @Name : printHeaders
+         * @Params : none
+         * @Returns : none
+         * @Purpose : the purpose of this method is to print headers for our reports.
+         */
+        System.out.println("--------------------------------------------------------------------------------------------------------");
+        System.out.println("Course ID     Section     Professor Name     Classroom     Capacity     Days     Start Time     End Time");
+        System.out.println("--------------------------------------------------------------------------------------------------------");
+    }
     public void printReportDayTime() throws SQLException, ClassNotFoundException {
         /**
          * @Name : printReportDayTime
          * @Params : none
          * @Returns : none
-         * @Purpose :
+         * @Purpose : The purpose of this method is to print out a report of every single scheduled section of a course
+         *            by day and time. We make sure the output is formatted nicely.
          */
+        //get a list that has the proper order of objects from our database access object.
         ArrayList<objReport> lstReport = databaseAccessObject.getScheduledCoursesByDayTime();
+        //print headers
         System.out.println("Printing out report by day and time");
-        System.out.println("--------------------------------------------------------------------------------------------------------");
-        System.out.println("Course ID     Section     Professor Name     Classroom     Capacity     Days     Start Time     End Time");
-        System.out.println("--------------------------------------------------------------------------------------------------------");
+        printHeaders();
+        //loop through each list entry and print it out with the formatted print statement.
         for (objReport r : lstReport){
             System.out.printf("%-13s %-11d %-18s %-13s %-12d %-8s %-14s %-8s\n", r.getStrCourseName(), r.getIntCourseSection(),
                     r.getStrProfessorName(), r.getStrClassroomName(), r.getIntClassroomCapacity(), r.getStrDays(),
@@ -653,13 +626,15 @@ public class SchedulerObject {
          * @Name : printReportProfessor
          * @Params : none
          * @Returns : none
-         * @Purpose
+         * @Purpose : the purpose of this method is to print out a report of all scheduled courses ordered by professor
+         *            name in alphabetical order
          */
+        //get a list that has the proper order of objects from our database access object.
         ArrayList<objReport> lstReport = databaseAccessObject.getScheduledCoursesByProfessor();
+        //print headers
         System.out.println("Printing out report by professor");
-        System.out.println("--------------------------------------------------------------------------------------------------------");
-        System.out.println("Course ID     Section     Professor Name     Classroom     Capacity     Days     Start Time     End Time");
-        System.out.println("--------------------------------------------------------------------------------------------------------");
+        printHeaders();
+        //loop through each list entry and use the formatted print method to print the information out nicely
         for (objReport r : lstReport){
             System.out.printf("%-13s %-11d %-18s %-13s %-12d %-8s %-14s %-8s\n", r.getStrCourseName(), r.getIntCourseSection(),
                     r.getStrProfessorName(), r.getStrClassroomName(), r.getIntClassroomCapacity(), r.getStrDays(),
@@ -671,13 +646,14 @@ public class SchedulerObject {
          * @Name : printReportCourse
          * @Params : none
          * @Returns : none
-         * @Purpose
+         * @Purpose : The purpose of this method is to print a report of every course ordered by course ID, in ascending order.
          */
+        //get a list that has the proper order of objects from our database access object.
         ArrayList<objReport> lstReport = databaseAccessObject.getScheduledCoursesByCourse();
+        //print headers
         System.out.println("Printing out report by course name");
-        System.out.println("--------------------------------------------------------------------------------------------------------");
-        System.out.println("Course ID     Section     Professor Name     Classroom     Capacity     Days     Start Time     End Time");
-        System.out.println("--------------------------------------------------------------------------------------------------------");
+        printHeaders();
+        //loop through each list entry and use the formatted print statement to print the object nicely.
         for (objReport r : lstReport){
             System.out.printf("%-13s %-11d %-18s %-13s %-12d %-8s %-14s %-8s\n", r.getStrCourseName(), r.getIntCourseSection(),
                     r.getStrProfessorName(), r.getStrClassroomName(), r.getIntClassroomCapacity(), r.getStrDays(),

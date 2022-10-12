@@ -11,6 +11,17 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class TestClass {
+    /**
+     * File Name :  TestClass
+     * File Author : Andrew A. Loesel
+     * Part of Project : CS 421 Assignment 3 - class scheduler
+     * Organization : Saginaw Valley State University
+     * Professor : Scott D. James
+     * File Purpose : This class was meant to provide a Test Driven approached to developing this application, but due
+     *                to changes in the objects used to interact with files, databases, and scheduling a lot of the tests
+     *                had to be scrapped or rewritten. This was a poor attempt at TDD, but a good learning experience for it.
+     *                This file is very messy and not a great example of good coding practices here.
+     */
     private static DatabaseAccessObject DAO = new DatabaseAccessObject();
     private static final String testFilePath = "testFile1.txt";
     private static final String SCHEDULE_FILE_PATH = "Schedule_Slot_Catalog.txt";
@@ -116,21 +127,6 @@ public class TestClass {
             return false;
         }
     }
-    public static boolean DBTest5() throws SQLException, ClassNotFoundException {
-        /**
-         * Name : DBTest5
-         * Returns : boolean - true -> test passed, false -> test failed
-         * Purpose : This test checks to see if our database access object method for finding an available slot
-         *           will work when there are no classes scheduled in that spot
-         */
-        System.out.println("STARTING DBTest 5 ...");
-        objClassroom classroom = DAO.getFreeClassroom("10:00", "11:00", "M");
-        if(classroom != null){
-            System.out.println("getFreeClassroom method returned " + classroom.getStrClassroomName());
-            return true;
-        }
-        return false;
-    }
     public static boolean DBTest6() throws SQLException, ClassNotFoundException {
         /**
          * Name : DBTest 6
@@ -142,92 +138,92 @@ public class TestClass {
         DAO.addSchedule(1,"07", 3, 2, "10:00", "2:00", "T");
         return true;
     }
-    public static boolean DBTest7() throws SQLException, ClassNotFoundException, IOException {
-        /**
-         * Name : DBTest7
-         * Returns : boolean - true -> test passed, false -> test failed
-         * Purpose : The purpose of this class is to see that we can get all scheduled classes
-         */
-        System.out.println("STARTING DBTEST 7 ...");
-        HashMap<String, ArrayList<objSchedule>> mapSchedule;
-        mapSchedule = DAO.getAllScheduled();
-        for(Map.Entry<String, ArrayList<objSchedule>> e : mapSchedule.entrySet()){
-            System.out.println("All classes on " + e.getKey() + " ---");
-            for(objSchedule s : e.getValue()){
-                System.out.println(s.getIntTUID() + " " + s.getStrDays() + " " + s.getStrStartTime() + " " + s.getStrEndTime());
-            }
-        }
-        return true;
-    }
-    public static boolean DBTest8() throws SQLException, ClassNotFoundException, IOException {
-        /**
-         * Name : DBTest8
-         * Returns : boolean - true -> test passed, false -> test failed
-         * Purpose :
-         */
-        System.out.println("Starting DB Test 8");
-        String strDaysCheck = "TR";
-        String strStartTime = "10:00";
-        String strEndTime = "12:00";
-        FileInteractionObject fileInteractionObject = new FileInteractionObject();
-        fileInteractionObject.instanciateBufferedReader(SCHEDULE_FILE_PATH);
-        HashMap<String, ArrayList<String>> mapTimes = fileInteractionObject.getTimes();
-        HashMap<String, ArrayList<objSchedule>> mapSchedule = DAO.getAllScheduled();
-        String strSeperateDays[] = getDaysSeperate(strDaysCheck);
-        ArrayList<Integer> lstScheduledTUIDS = new ArrayList<>();
-        int intStartIndex = 0;
-        int intEndIndex = 0;
-
-        for(int i = 0; i < strSeperateDays.length; i++){
-            System.out.println("Looking at " + strSeperateDays[i]);
-            ArrayList<String> lstTemp = mapTimes.get(strSeperateDays[i]);
-            //lstTemp is every possible time slot on the given day
-            //loop through until s = our start time, then from our start time to end time check mapSchedule on the days
-            //to see how many classes are in the time period
-            for (String s : lstTemp){
-                if(s.equals(strStartTime)){
-                    intStartIndex = lstTemp.indexOf(s);
-                }
-                if(s.equals(strEndTime)){
-                    intEndIndex = lstTemp.indexOf(s);
-                    break;
-                }
-            }
-            //now that we have the index of the start and end times lets loop through and try to find scheduled classes
-            ArrayList<objSchedule> lstSchedule = mapSchedule.get(strSeperateDays[i]);
-            ArrayList<String> lstTimes = mapTimes.get(strSeperateDays[i]);
-            for(int j = intStartIndex; j <= intEndIndex; j++){
-                String strCurrTime = lstTimes.get(j);
-
-
-                for(objSchedule schedule : lstSchedule){
-                    LocalTime time = LocalTime.parse("9:00");
-                    if(schedule.getStrStartTime().equals(strCurrTime)){
-                        if(!lstScheduledTUIDS.contains(schedule.getIntTUID())) {
-                            System.out.println("Added " + schedule.getIntTUID() + " on " + strSeperateDays[i]);
-
-                            lstScheduledTUIDS.add(schedule.getIntTUID());
-                        }else{
-                            System.out.println("** caught extra");
-                        }
-                    }
-                    if(schedule.getStrEndTime().equals(strCurrTime)){
-                        if(!lstScheduledTUIDS.contains(schedule.getIntTUID())) {
-                            System.out.println("Added " + schedule.getIntTUID() + " on " + strSeperateDays[i]);
-
-                            lstScheduledTUIDS.add(schedule.getIntTUID());
-                        }else{
-                            System.out.println("** caught extra");
-                        }
-                    }
-                }
-
-            }
-        }
-        System.out.println("On "+ strDaysCheck + " " + strStartTime + "-" + strEndTime + " There are " + lstScheduledTUIDS.size() + " already scheduled");
-
-        return true;
-    }
+//    public static boolean DBTest7() throws SQLException, ClassNotFoundException, IOException {
+//        /**
+//         * Name : DBTest7
+//         * Returns : boolean - true -> test passed, false -> test failed
+//         * Purpose : The purpose of this class is to see that we can get all scheduled classes
+//         */
+//        System.out.println("STARTING DBTEST 7 ...");
+//        HashMap<String, ArrayList<objSchedule>> mapSchedule;
+//        mapSchedule = DAO.getAllScheduled();
+//        for(Map.Entry<String, ArrayList<objSchedule>> e : mapSchedule.entrySet()){
+//            System.out.println("All classes on " + e.getKey() + " ---");
+//            for(objSchedule s : e.getValue()){
+//                System.out.println(s.getIntTUID() + " " + s.getStrDays() + " " + s.getStrStartTime() + " " + s.getStrEndTime());
+//            }
+//        }
+//        return true;
+//    }
+//    public static boolean DBTest8() throws SQLException, ClassNotFoundException, IOException {
+//        /**
+//         * Name : DBTest8
+//         * Returns : boolean - true -> test passed, false -> test failed
+//         * Purpose :
+//         */
+//        System.out.println("Starting DB Test 8");
+//        String strDaysCheck = "TR";
+//        String strStartTime = "10:00";
+//        String strEndTime = "12:00";
+//        FileInteractionObject fileInteractionObject = new FileInteractionObject();
+//        fileInteractionObject.instanciateBufferedReader(SCHEDULE_FILE_PATH);
+//        HashMap<String, ArrayList<String>> mapTimes = fileInteractionObject.getTimes();
+//        HashMap<String, ArrayList<objSchedule>> mapSchedule = DAO.getAllScheduled();
+//        String strSeperateDays[] = getDaysSeperate(strDaysCheck);
+//        ArrayList<Integer> lstScheduledTUIDS = new ArrayList<>();
+//        int intStartIndex = 0;
+//        int intEndIndex = 0;
+//
+//        for(int i = 0; i < strSeperateDays.length; i++){
+//            System.out.println("Looking at " + strSeperateDays[i]);
+//            ArrayList<String> lstTemp = mapTimes.get(strSeperateDays[i]);
+//            //lstTemp is every possible time slot on the given day
+//            //loop through until s = our start time, then from our start time to end time check mapSchedule on the days
+//            //to see how many classes are in the time period
+//            for (String s : lstTemp){
+//                if(s.equals(strStartTime)){
+//                    intStartIndex = lstTemp.indexOf(s);
+//                }
+//                if(s.equals(strEndTime)){
+//                    intEndIndex = lstTemp.indexOf(s);
+//                    break;
+//                }
+//            }
+//            //now that we have the index of the start and end times lets loop through and try to find scheduled classes
+//            ArrayList<objSchedule> lstSchedule = mapSchedule.get(strSeperateDays[i]);
+//            ArrayList<String> lstTimes = mapTimes.get(strSeperateDays[i]);
+//            for(int j = intStartIndex; j <= intEndIndex; j++){
+//                String strCurrTime = lstTimes.get(j);
+//
+//
+//                for(objSchedule schedule : lstSchedule){
+//                    LocalTime time = LocalTime.parse("9:00");
+//                    if(schedule.getStrStartTime().equals(strCurrTime)){
+//                        if(!lstScheduledTUIDS.contains(schedule.getIntTUID())) {
+//                            System.out.println("Added " + schedule.getIntTUID() + " on " + strSeperateDays[i]);
+//
+//                            lstScheduledTUIDS.add(schedule.getIntTUID());
+//                        }else{
+//                            System.out.println("** caught extra");
+//                        }
+//                    }
+//                    if(schedule.getStrEndTime().equals(strCurrTime)){
+//                        if(!lstScheduledTUIDS.contains(schedule.getIntTUID())) {
+//                            System.out.println("Added " + schedule.getIntTUID() + " on " + strSeperateDays[i]);
+//
+//                            lstScheduledTUIDS.add(schedule.getIntTUID());
+//                        }else{
+//                            System.out.println("** caught extra");
+//                        }
+//                    }
+//                }
+//
+//            }
+//        }
+//        System.out.println("On "+ strDaysCheck + " " + strStartTime + "-" + strEndTime + " There are " + lstScheduledTUIDS.size() + " already scheduled");
+//
+//        return true;
+//    }
     HashMap<String, ArrayList<String>> getAllTimesForClass(String strStartTime, String strEndTime, String[] strDays) throws IOException {
         FileInteractionObject fileInteractionObject = new FileInteractionObject();
         fileInteractionObject.instanciateBufferedReader("Schedule_Slot_Catalog.txt");
@@ -277,9 +273,9 @@ public class TestClass {
         System.out.println("DBTest2 : " + DBTest2());
         System.out.println("DBTest3 : " + DBTest3());
         System.out.println("DBTest4 : " + DBTest4() + " Disregard false if 1 input on DBTest1.");
-        System.out.println("DBTest5 : " + DBTest5());
+        //System.out.println("DBTest5 : " + DBTest5());
         System.out.println("DBTest6 : " + DBTest6());
-        System.out.println("DBTest7 : " + DBTest7());
+        //System.out.println("DBTest7 : " + DBTest7());
         //System.out.println("DBTest8 : " + DBTest8());
 
         System.out.println("END DATABASE TESTS .....");
@@ -447,125 +443,125 @@ public class TestClass {
         }
         return true;
     }
-    public static boolean ScheduleTest2() throws SQLException, ClassNotFoundException {
-        /**
-         * Name : ScheduleTest2
-         * Returns : boolean - true -> test passed, false -> test failed.
-         * Purpose : The purpose of this method is to see if using the LocalTime class to compare times and see how classes are
-         *           scheduled in a given time slot works.
-         */
-
-        String strTestDays = "TR";
-        String strTestStartTime = "10:00";
-        String strTestEndTime = "11:30";
-        String strTestDaysSeperate[] = getDaysSeperate(strTestDays);
-        ArrayList<Integer> lstAccountedForTUIDS = new ArrayList<>();
-        HashMap<String, ArrayList<objSchedule>> mapScheduled = DAO.getAllScheduled();
-        for(int i = 0; i < strTestDaysSeperate.length; i++){
-            ArrayList<objSchedule> lstScheduledClassesOnDay = mapScheduled.get(strTestDaysSeperate[i]);
-            LocalTime timeTestStart = LocalTime.of(Integer.parseInt(strTestStartTime.split(":")[0]),
-                    Integer.parseInt(strTestStartTime.split(":")[1]));
-            LocalTime timeTestEnd = LocalTime.of(Integer.parseInt(strTestEndTime.split(":")[0]),
-                    Integer.parseInt(strTestEndTime.split(":")[1]));
-            for(objSchedule s : lstScheduledClassesOnDay){
-                LocalTime timeCurrentStart = getTimeFromString(s.getStrStartTime());
-                LocalTime timeCurrentEnd = getTimeFromString(s.getStrEndTime());
-                //first check if timeStart is after timeCurrentStart, and before timeCurrentEnd
-                if(timeTestStart.isAfter(timeCurrentStart) && timeTestStart.isBefore(timeCurrentEnd)){
-                    //WE NEED TO COUNT THIS AS A CLASS IN OUR SLOT
-                    if(!lstAccountedForTUIDS.contains(s.getIntTUID())){
-                        lstAccountedForTUIDS.add(s.getIntTUID());
-                    }
-                    continue;
-                }
-                //next see if start time or end times are equal
-                if(timeCurrentStart.equals(timeTestStart) || timeCurrentEnd.equals(timeTestEnd)){
-                    //WE NEED TO COUNT THIS AS A CLASS IN OUR SLOT
-                    if(!lstAccountedForTUIDS.contains(s.getIntTUID())){
-                        lstAccountedForTUIDS.add(s.getIntTUID());
-                    }
-                    continue;
-                }
-                //next see if timeEnd is between start and end time
-                if(timeTestEnd.isAfter(timeCurrentEnd) && timeTestEnd.isBefore(timeCurrentEnd)){
-                    //NEED TO COUNT IN OUR SLOT
-                    if(!lstAccountedForTUIDS.contains(s.getIntTUID())){
-                        lstAccountedForTUIDS.add(s.getIntTUID());
-                    }
-                    continue;
-                }
-                //next case we need to account for is if the class we try to schedule starts before a scheduled course and ends after a scheduled course
-                if(timeCurrentStart.isAfter(timeTestStart) && timeCurrentStart.isBefore(timeTestEnd)){
-                    //the current class that we are looking at starts after the class we are looking to add, but its start time is within the new classes endtime
-                    if(!lstAccountedForTUIDS.contains(s.getIntTUID())){
-                        lstAccountedForTUIDS.add(s.getIntTUID());
-                    }
-                    continue;
-                }
-
-            }
-        }
-        for(int tuid : lstAccountedForTUIDS){
-            System.out.println(tuid + " is in the timeslot");
-        }
-        System.out.println("There are " + lstAccountedForTUIDS.size()+ " scheduled in slot.");
-        return true;
-    }
+//    public static boolean ScheduleTest2() throws SQLException, ClassNotFoundException {
+//        /**
+//         * Name : ScheduleTest2
+//         * Returns : boolean - true -> test passed, false -> test failed.
+//         * Purpose : The purpose of this method is to see if using the LocalTime class to compare times and see how classes are
+//         *           scheduled in a given time slot works.
+//         */
+//
+//        String strTestDays = "TR";
+//        String strTestStartTime = "10:00";
+//        String strTestEndTime = "11:30";
+//        String strTestDaysSeperate[] = getDaysSeperate(strTestDays);
+//        ArrayList<Integer> lstAccountedForTUIDS = new ArrayList<>();
+//        HashMap<String, ArrayList<objSchedule>> mapScheduled = DAO.getAllScheduled();
+//        for(int i = 0; i < strTestDaysSeperate.length; i++){
+//            ArrayList<objSchedule> lstScheduledClassesOnDay = mapScheduled.get(strTestDaysSeperate[i]);
+//            LocalTime timeTestStart = LocalTime.of(Integer.parseInt(strTestStartTime.split(":")[0]),
+//                    Integer.parseInt(strTestStartTime.split(":")[1]));
+//            LocalTime timeTestEnd = LocalTime.of(Integer.parseInt(strTestEndTime.split(":")[0]),
+//                    Integer.parseInt(strTestEndTime.split(":")[1]));
+//            for(objSchedule s : lstScheduledClassesOnDay){
+//                LocalTime timeCurrentStart = getTimeFromString(s.getStrStartTime());
+//                LocalTime timeCurrentEnd = getTimeFromString(s.getStrEndTime());
+//                //first check if timeStart is after timeCurrentStart, and before timeCurrentEnd
+//                if(timeTestStart.isAfter(timeCurrentStart) && timeTestStart.isBefore(timeCurrentEnd)){
+//                    //WE NEED TO COUNT THIS AS A CLASS IN OUR SLOT
+//                    if(!lstAccountedForTUIDS.contains(s.getIntTUID())){
+//                        lstAccountedForTUIDS.add(s.getIntTUID());
+//                    }
+//                    continue;
+//                }
+//                //next see if start time or end times are equal
+//                if(timeCurrentStart.equals(timeTestStart) || timeCurrentEnd.equals(timeTestEnd)){
+//                    //WE NEED TO COUNT THIS AS A CLASS IN OUR SLOT
+//                    if(!lstAccountedForTUIDS.contains(s.getIntTUID())){
+//                        lstAccountedForTUIDS.add(s.getIntTUID());
+//                    }
+//                    continue;
+//                }
+//                //next see if timeEnd is between start and end time
+//                if(timeTestEnd.isAfter(timeCurrentEnd) && timeTestEnd.isBefore(timeCurrentEnd)){
+//                    //NEED TO COUNT IN OUR SLOT
+//                    if(!lstAccountedForTUIDS.contains(s.getIntTUID())){
+//                        lstAccountedForTUIDS.add(s.getIntTUID());
+//                    }
+//                    continue;
+//                }
+//                //next case we need to account for is if the class we try to schedule starts before a scheduled course and ends after a scheduled course
+//                if(timeCurrentStart.isAfter(timeTestStart) && timeCurrentStart.isBefore(timeTestEnd)){
+//                    //the current class that we are looking at starts after the class we are looking to add, but its start time is within the new classes endtime
+//                    if(!lstAccountedForTUIDS.contains(s.getIntTUID())){
+//                        lstAccountedForTUIDS.add(s.getIntTUID());
+//                    }
+//                    continue;
+//                }
+//
+//            }
+//        }
+//        for(int tuid : lstAccountedForTUIDS){
+//            System.out.println(tuid + " is in the timeslot");
+//        }
+//        System.out.println("There are " + lstAccountedForTUIDS.size()+ " scheduled in slot.");
+//        return true;
+//    }
     public static LocalTime getTimeFromString(String strTime){
         LocalTime time = LocalTime.of(Integer.parseInt(strTime.split(":")[0]), Integer.parseInt(strTime.split(":")[1]));
         return time;
     }
-    public static boolean ScheduleTest3() throws SQLException, ClassNotFoundException, IOException {
-        /**
-         * Name : ScheduleTest3
-         * Returns : boolean, true -> test passed, false -> test failed
-         * Purpose : The Purpose of this test is to see if we can take in a file that will max out all time slots for 4
-         *           credit courses, and try to schedule them all.
-         * Notes : this test has been deprecated since moving sections to a map.
-         */
-        System.out.println("STARTING SCHEDULE TEST 3 ...");
-        DAO.endSession();
-        DAO.startUp();
-
-        FileInteractionObject fileInteractionObject = new FileInteractionObject();
-        fileInteractionObject.instanciateBufferedReader("Test_Fill_Schedule_4_Cred.txt");
-        SchedulerObject scheduler = new SchedulerObject(DAO, fileInteractionObject);
-        scheduler.scheduleAll(fileInteractionObject.readAllFileLine(), fileInteractionObject.getSectionMap());
-        HashMap<String, ArrayList<objSchedule>> mapAllScheduled = DAO.getAllScheduled();
-        for(Map.Entry<String, ArrayList<objSchedule>> e : mapAllScheduled.entrySet()){
-            for(objSchedule s : e.getValue()){
-                System.out.println(s.toString());
-            }
-        }
-        return true;
-    }
-    public static boolean ScheduleTest4() throws SQLException, ClassNotFoundException, IOException {
-        /**
-         * Name : ScheduleTest4
-         * Returns : boolean - true -> test passed, false -> test failed.
-         * Purpose : The purpose of this test is to see if we can schedule both 4 and 3 credit courses at the same time.
-         * Notes : this test is deprecated since moving sections to a map
-         */
-        System.out.println("STARTING SCHEDULE TEST 4 ...");
-        DAO.endSession();
-        DAO.startUp();
-        try {
-            FileInteractionObject fileInteractionObject = new FileInteractionObject();
-            fileInteractionObject.instanciateBufferedReader("Test_Fill_Three_And_Four_Cred.txt");
-            SchedulerObject schedulerObject = new SchedulerObject(DAO, fileInteractionObject);
-            schedulerObject.scheduleAll(fileInteractionObject.readAllFileLine(), fileInteractionObject.getSectionMap());
-        } catch (Exception ex){
-            ex.printStackTrace();
-            return false;
-        }
-        HashMap<String, ArrayList<objSchedule>> mapAllScheduled = DAO.getAllScheduled();
-        for(Map.Entry<String, ArrayList<objSchedule>> e : mapAllScheduled.entrySet()){
-            for(objSchedule s : e.getValue()){
-                System.out.println(s.toString());
-            }
-        }
-        return true;
-    }
+//    public static boolean ScheduleTest3() throws SQLException, ClassNotFoundException, IOException {
+//        /**
+//         * Name : ScheduleTest3
+//         * Returns : boolean, true -> test passed, false -> test failed
+//         * Purpose : The Purpose of this test is to see if we can take in a file that will max out all time slots for 4
+//         *           credit courses, and try to schedule them all.
+//         * Notes : this test has been deprecated since moving sections to a map.
+//         */
+//        System.out.println("STARTING SCHEDULE TEST 3 ...");
+//        DAO.endSession();
+//        DAO.startUp();
+//
+//        FileInteractionObject fileInteractionObject = new FileInteractionObject();
+//        fileInteractionObject.instanciateBufferedReader("Test_Fill_Schedule_4_Cred.txt");
+//        SchedulerObject scheduler = new SchedulerObject(DAO, fileInteractionObject);
+//        scheduler.scheduleAll(fileInteractionObject.readAllFileLine(), fileInteractionObject.getSectionMap());
+//        HashMap<String, ArrayList<objSchedule>> mapAllScheduled = DAO.getAllScheduled();
+//        for(Map.Entry<String, ArrayList<objSchedule>> e : mapAllScheduled.entrySet()){
+//            for(objSchedule s : e.getValue()){
+//                System.out.println(s.toString());
+//            }
+//        }
+//        return true;
+//    }
+//    public static boolean ScheduleTest4() throws SQLException, ClassNotFoundException, IOException {
+//        /**
+//         * Name : ScheduleTest4
+//         * Returns : boolean - true -> test passed, false -> test failed.
+//         * Purpose : The purpose of this test is to see if we can schedule both 4 and 3 credit courses at the same time.
+//         * Notes : this test is deprecated since moving sections to a map
+//         */
+//        System.out.println("STARTING SCHEDULE TEST 4 ...");
+//        DAO.endSession();
+//        DAO.startUp();
+//        try {
+//            FileInteractionObject fileInteractionObject = new FileInteractionObject();
+//            fileInteractionObject.instanciateBufferedReader("Test_Fill_Three_And_Four_Cred.txt");
+//            SchedulerObject schedulerObject = new SchedulerObject(DAO, fileInteractionObject);
+//            schedulerObject.scheduleAll(fileInteractionObject.readAllFileLine(), fileInteractionObject.getSectionMap());
+//        } catch (Exception ex){
+//            ex.printStackTrace();
+//            return false;
+//        }
+//        HashMap<String, ArrayList<objSchedule>> mapAllScheduled = DAO.getAllScheduled();
+//        for(Map.Entry<String, ArrayList<objSchedule>> e : mapAllScheduled.entrySet()){
+//            for(objSchedule s : e.getValue()){
+//                System.out.println(s.toString());
+//            }
+//        }
+//        return true;
+//    }
     public static boolean ScheduleTest5() throws IOException, SQLException, ClassNotFoundException {
         /**
          * Name : ScheduleTest5

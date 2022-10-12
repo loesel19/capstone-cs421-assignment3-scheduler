@@ -3,6 +3,16 @@ import java.sql.SQLException;
 import java.util.Scanner;
 
 public class main {
+    /**
+     * File Name :  main
+     * File Author : Andrew A. Loesel
+     * Part of Project : CS 421 Assignment 3 - class scheduler
+     * Organization : Saginaw Valley State University
+     * Professor : Scott D. James
+     * File Purpose : This is the object that will first run when our program is launched. This will be the
+     *                highest object in the stack for the program during execution. Since we approached this
+     *                program with a high amount of OOP this file is just a shell used to launch user interactions.
+     */
     public static void main(String args[]) throws SQLException, IOException, ClassNotFoundException {
         /**
          * Name : main
