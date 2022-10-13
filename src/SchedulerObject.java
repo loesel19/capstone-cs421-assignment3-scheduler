@@ -1,18 +1,10 @@
-import com.sun.source.tree.WhileLoopTree;
 
-import java.sql.Array;
-import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;
-import java.time.temporal.TemporalUnit;
 import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
 import java.util.HashMap;
-import java.util.regex.*;
+
 
 public class SchedulerObject {
     /**
